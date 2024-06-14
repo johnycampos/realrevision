@@ -12,7 +12,6 @@ import '@core/scss/index.scss'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import './@fake-db/db'
-import './@iconify/icons-bundle'
 loadFonts()
 const app = createApp(App)
 app.use(vuetify)
