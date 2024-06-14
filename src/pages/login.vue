@@ -108,7 +108,7 @@ const onSubmit = () => {
         >
           <VCardText>
             <h5 class="text-h5 font-weight-semibold mb-1">
-              Bem vindo à loja Teste👋🏻
+              Bem vindo à loja👋🏻
             </h5>
             <p class="mb-0" />
           </VCardText>
