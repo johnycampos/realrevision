@@ -1,8 +1,8 @@
 import axios from 'axios'
 
-const API_URL = 'https://backendnode-cu2o.onrender.com'
+//const API_URL = 'https://backendnode-cu2o.onrender.com'
 
-// const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL
 
 const API = axios.create({
   baseURL: API_URL,

@@ -12,6 +12,7 @@ export default {
         headers: { 'g-recaptcha-response': 'teste' },
         transformResponse: [
           function (data) {
+
             // Tente logar o data recebido para ver o que está vindo
             console.log('Raw response data:', data)
   
