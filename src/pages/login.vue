@@ -30,7 +30,7 @@ const errors = ref({
 const refVForm = ref()
 const isFlatSnackbarVisible = ref(false)
 const email = ref('johny')
-const password = ref('testando')
+const password = ref('teste')
 const rememberMe = ref(false)
 const login = () => {
   api.logar(email.value, password.value).then(r => {
