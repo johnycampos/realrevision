@@ -5,7 +5,7 @@ const theme = {
     light: {
       dark: false,
       colors: {
-        'primary': localStorage.getItem(`${themeConfig.app.title}-lightThemePrimaryColor`) || '#9155FD',
+        'primary': localStorage.getItem(`${themeConfig.app.title}-lightThemePrimaryColor`) || '#119FBF',
         'secondary': '#8A8D93',
         'on-secondary': '#fff',
         'success': '#56CA00',
