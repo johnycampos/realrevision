@@ -2,10 +2,9 @@
 import authV2LoginIllustrationBorderedDark from '@/assets/images/pages/auth-v2-login-illustration-bordered-dark.png'
 import authV2LoginIllustrationBorderedLight from '@/assets/images/pages/auth-v2-login-illustration-bordered-light.png'
 import authV2LoginIllustrationDark from '@/assets/images/pages/auth-v2-login-illustration-dark.png'
-import authV2LoginIllustrationLight from '@/assets/images/pages/auth-v2-login-illustration-light.png'
 import authV2MaskDark from '@/assets/images/pages/auth-v2-mask-dark.png'
 import authV2MaskLight from '@/assets/images/pages/auth-v2-mask-light.png'
-import tree from '@/assets/images/pages/tree.png'
+import logoReal from '@/assets/images/pages/logo-real.png'
 import { useAppAbility } from '@/plugins/casl/useAppAbility'
 import { useGenerateImageVariant } from '@core/composable/useGenerateImageVariant'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
@@ -18,7 +17,7 @@ import { VForm } from 'vuetify/components'
 import api from '../server/Auth'
 
 const isPasswordVisible = ref(false)
-const authThemeImg = useGenerateImageVariant(authV2LoginIllustrationLight, authV2LoginIllustrationDark, authV2LoginIllustrationBorderedLight, authV2LoginIllustrationBorderedDark, true)
+const authThemeImg = useGenerateImageVariant(logoReal, authV2LoginIllustrationDark, authV2LoginIllustrationBorderedLight, authV2LoginIllustrationBorderedDark, true)
 const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
 const route = useRoute()
 const router = useRouter()
@@ -82,13 +81,8 @@ const onSubmit = () => {
       >
         <VImg
           max-width="768px"
-          :src="authThemeImg"
+          :src="logoReal"
           class="auth-illustration"
-        />
-        <VImg
-          :width="276"
-          :src="tree"
-          class="auth-footer-start-tree"
         />
         <VImg
           class="auth-footer-mask"
@@ -173,18 +167,20 @@ const onSubmit = () => {
                 </VCol>
 
                 <!-- create account -->
-                <VCol
+                <!--
+                  <VCol
                   cols="12"
                   class="text-center"
-                >
+                  >
                   <span>Não possui login?</span>
                   <RouterLink
-                    class="text-primary ms-2"
-                    :to="{ name: 'register' }"
+                  class="text-primary ms-2"
+                  :to="{ name: 'register' }"
                   >
-                    Criar Nova Conta
+                  Criar Nova Conta
                   </RouterLink>
-                </VCol>
+                  </VCol> 
+                -->
               </VRow>
             </VForm>
           </VCardText>
