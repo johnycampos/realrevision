@@ -7,8 +7,6 @@ import authV2MaskLight from '@/assets/images/pages/auth-v2-mask-light.png'
 import logoReal from '@/assets/images/pages/logo-real.png'
 import { useAppAbility } from '@/plugins/casl/useAppAbility'
 import { useGenerateImageVariant } from '@core/composable/useGenerateImageVariant'
-import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
-import { themeConfig } from '@themeConfig'
 import {
   requiredValidator
 } from '@validators'
@@ -63,14 +61,16 @@ const onSubmit = () => {
 <template>
   <div>
     <!-- Title and Logo -->
-    <div class="auth-logo d-flex align-start gap-x-3">
+    <!--
+      <div class="auth-logo d-flex align-start gap-x-3">
       <VNodeRenderer :nodes="themeConfig.app.logo" />
 
       <h1 class="font-weight-semibold leading-normal text-2xl text-uppercase">
-        {{ themeConfig.app.title }}
+      {{ themeConfig.app.title }}
       </h1>
-    </div>
-
+      </div> 
+    -->
+  
     <VRow
       no-gutters
       class="auth-wrapper"
@@ -100,7 +100,14 @@ const onSubmit = () => {
           :max-width="500"
           class="mt-12 mt-sm-0 pa-4"
         >
-          <VCardText>
+          <div class="d-flex justify-center">
+            <VImg
+              :src="logoReal"
+              class="d-block d-lg-none mb-4"
+              max-width="200"
+            /> 
+          </div>
+          <VCardText class="d-flex justify-center">           
             <h5 class="text-h5 font-weight-semibold mb-1">
               Bem vindo à loja👋🏻
             </h5>
