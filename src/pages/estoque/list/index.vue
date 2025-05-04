@@ -3,6 +3,7 @@ import { VAvatar, VBtn, VCard, VCardText, VChip, VCol, VDialog, VDivider, VPagin
 
 import estoque from '@/server/Estoque'
 import Dialog from './dialog.vue'
+import DialogCriar from './dialogCriar.vue'
 
 const searchQuery = ref('')
 const rowPerPage = ref(10)
@@ -12,6 +13,7 @@ const totalItens = ref(0)
 const itens = ref([])
 const itemSelecionado = ref(null)
 const dialogDetalhes = ref(false)
+const dialogCriar = ref(false)
 const isLoading = ref(false)
 
 // 👉 Fetching itens
@@ -63,6 +65,10 @@ const itensPaginados = computed(() => {
 const abrirDetalhes = item => {
   itemSelecionado.value = item
   dialogDetalhes.value = true
+}
+
+const abrirCriarItem = () => {
+  dialogCriar.value = true
 }
 
 // Configuração das colunas da tabela
@@ -131,7 +137,7 @@ watch(searchQuery, () => {
 
         <div class="app-user-search-filter d-flex align-center">
           <!-- 👉 Add item button -->
-          <VBtn>
+          <VBtn @click="abrirCriarItem">
             Adicionar Item
           </VBtn>
         </div>
@@ -343,6 +349,18 @@ watch(searchQuery, () => {
         :item="itemSelecionado"
         :is-open="dialogDetalhes"
         @close="dialogDetalhes = false"
+        @update:item="fetchItens"
+      />
+    </VDialog>
+
+    <!-- Dialog de Criação -->
+    <VDialog
+      v-model="dialogCriar"
+      max-width="800"
+    >
+      <DialogCriar
+        :is-open="dialogCriar"
+        @close="dialogCriar = false"
         @update:item="fetchItens"
       />
     </VDialog>
