@@ -103,7 +103,7 @@
               />
             </div>
             <div>
-              <span class="label">Preço Revenda</span>
+              <span class="label mb-6">Preço Revenda</span>
               <VTextField
                 v-model="itemEditado.preco_revenda"
                 density="compact"
@@ -113,7 +113,7 @@
               />
             </div>
             <div>
-              <span class="label">Outros Preços</span>
+              <span class="label mb-6">Outros Preços</span>
               <VTextField
                 v-model="itemEditado.preco_outros"
                 density="compact"
@@ -140,7 +140,7 @@
             />
           </div>
           <div>
-            <span class="label">Lote Ideal</span>
+            <span class="label mb-6">Lote Ideal</span>
             <VTextField
               v-model="itemEditado.lote_ideal"
               density="compact"
