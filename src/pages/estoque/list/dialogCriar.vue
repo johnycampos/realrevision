@@ -168,7 +168,7 @@ const criarItem = async () => {
               />
             </div>
             <div>
-              <span class="label">Preço Revenda</span>
+              <span class="label mb-6">Preço Revenda</span>
               <VTextField
                 v-model="novoItem.preco_revenda"
                 density="compact"
@@ -178,7 +178,7 @@ const criarItem = async () => {
               />
             </div>
             <div>
-              <span class="label">Outros Preços</span>
+              <span class="label mb-6">Outros Preços</span>
               <VTextField
                 v-model="novoItem.preco_outros"
                 density="compact"
@@ -205,7 +205,7 @@ const criarItem = async () => {
             />
           </div>
           <div>
-            <span class="label">Lote Ideal</span>
+            <span class="label mb-6">Lote Ideal</span>
             <VTextField
               v-model="novoItem.lote_ideal"
               density="compact"
