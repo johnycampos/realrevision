@@ -209,11 +209,16 @@ const formatarPreco = preco => {
   border-radius: 8px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 10%);
   inline-size: 800px;
+  max-block-size: 90vh;
+  overflow-y: auto;
 }
 
 @media (max-width: 640px) {
   .product-details {
     inline-size: 95%;
+    margin-block: 16px;
+    margin-inline: auto;
+    max-block-size: 85vh;
   }
 }
 
