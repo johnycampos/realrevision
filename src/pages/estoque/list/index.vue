@@ -1,7 +1,8 @@
 <script setup>
-import { VAvatar, VBtn, VCard, VCardActions, VCardText, VCardTitle, VChip, VCol, VDialog, VDivider, VIcon, VList, VListItem, VListItemSubtitle, VListItemTitle, VMenu, VPagination, VRow, VSelect, VSpacer, VTextField } from 'vuetify/components'
+import { VAvatar, VBtn, VCard, VCardText, VChip, VCol, VDialog, VDivider, VIcon, VList, VListItem, VListItemTitle, VMenu, VPagination, VRow, VSelect, VSpacer, VTextField } from 'vuetify/components'
 
 import estoque from '@/server/Estoque'
+import Dialog from './dialog.vue'
 
 const searchQuery = ref('')
 const rowPerPage = ref(10)
@@ -211,7 +212,7 @@ watch(searchQuery, () => {
                 size="small"
                 class="text-capitalize"
               >
-                {{ formatarQuantidade(item.quantidade_disponivel, item.unidade_nome) }}
+                {{ item.quantidade_disponivel }}
               </VChip>
             </td>
 
@@ -326,128 +327,10 @@ watch(searchQuery, () => {
       v-model="dialogDetalhes"
       max-width="800"
     >
-      <VCard v-if="itemSelecionado">
-        <VCardTitle class="d-flex justify-space-between align-center">
-          <span>Detalhes do Item</span>
-          <VBtn
-            icon
-            variant="text"
-            @click="dialogDetalhes = false"
-          >
-            <VIcon>mdi-close</VIcon>
-          </VBtn>
-        </VCardTitle>
-
-        <VCardText>
-          <VRow>
-            <VCol
-              cols="12"
-              sm="6"
-            >
-              <VList>
-                <VListItem>
-                  <VListItemTitle class="font-weight-bold">
-                    Código
-                  </VListItemTitle>
-                  <VListItemSubtitle>{{ itemSelecionado.codigo }}</VListItemSubtitle>
-                </VListItem>
-
-                <VListItem>
-                  <VListItemTitle class="font-weight-bold">
-                    Nome
-                  </VListItemTitle>
-                  <VListItemSubtitle>{{ itemSelecionado.nome }}</VListItemSubtitle>
-                </VListItem>
-
-                <VListItem>
-                  <VListItemTitle class="font-weight-bold">
-                    Nome Curto
-                  </VListItemTitle>
-                  <VListItemSubtitle>{{ itemSelecionado.nome_curto }}</VListItemSubtitle>
-                </VListItem>
-
-                <VListItem>
-                  <VListItemTitle class="font-weight-bold">
-                    Grupo
-                  </VListItemTitle>
-                  <VListItemSubtitle>{{ itemSelecionado.grupo_nome }} / {{ itemSelecionado.subgrupo_nome }}</VListItemSubtitle>
-                </VListItem>
-
-                <VListItem>
-                  <VListItemTitle class="font-weight-bold">
-                    Quantidade Disponível
-                  </VListItemTitle>
-                  <VListItemSubtitle>{{ itemSelecionado.quantidade_disponivel }} {{ itemSelecionado.unidade_nome }}</VListItemSubtitle>
-                </VListItem>
-              </VList>
-            </VCol>
-
-            <VCol
-              cols="12"
-              sm="6"
-            >
-              <VList>
-                <VListItem>
-                  <VListItemTitle class="font-weight-bold">
-                    Preços
-                  </VListItemTitle>
-                  <VListItemSubtitle>
-                    <div>Consumidor: R$ {{ itemSelecionado.preco_consumidor }}</div>
-                    <div>Revenda: R$ {{ itemSelecionado.preco_revenda }}</div>
-                    <div>Outros: R$ {{ itemSelecionado.preco_outros }}</div>
-                  </VListItemSubtitle>
-                </VListItem>
-
-                <VListItem>
-                  <VListItemTitle class="font-weight-bold">
-                    Custos
-                  </VListItemTitle>
-                  <VListItemSubtitle>
-                    <div>Custo de Compra: R$ {{ itemSelecionado.custo_compra }}</div>
-                    <div>Percentual de Lucro: {{ itemSelecionado.percentual_lucro }}%</div>
-                  </VListItemSubtitle>
-                </VListItem>
-
-                <VListItem>
-                  <VListItemTitle class="font-weight-bold">
-                    Estoque
-                  </VListItemTitle>
-                  <VListItemSubtitle>
-                    <div>Lote Ideal: {{ itemSelecionado.lote_ideal }}</div>
-                    <div>Quantidade Mínima: {{ itemSelecionado.quantidade_minima }}</div>
-                    <div>Local: {{ itemSelecionado.local_estoque_nome }}</div>
-                    <div>Gaveta: {{ itemSelecionado.gaveta }}</div>
-                  </VListItemSubtitle>
-                </VListItem>
-
-                <VListItem>
-                  <VListItemTitle class="font-weight-bold">
-                    Fabricante
-                  </VListItemTitle>
-                  <VListItemSubtitle>{{ itemSelecionado.fabricante_nome }}</VListItemSubtitle>
-                </VListItem>
-
-                <VListItem>
-                  <VListItemTitle class="font-weight-bold">
-                    Observações
-                  </VListItemTitle>
-                  <VListItemSubtitle>{{ itemSelecionado.observacoes }}</VListItemSubtitle>
-                </VListItem>
-              </VList>
-            </VCol>
-          </VRow>
-        </VCardText>
-
-        <VCardActions>
-          <VSpacer />
-          <VBtn
-            color="primary"
-            @click="dialogDetalhes = false"
-          >
-            Fechar
-          </VBtn>
-        </VCardActions>
-      </VCard>
+      <Dialog
+        :item="itemSelecionado"
+        :is-open="dialogDetalhes"
+      />
     </VDialog>
   </section>
 </template>
