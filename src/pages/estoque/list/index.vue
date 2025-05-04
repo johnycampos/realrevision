@@ -1,5 +1,5 @@
 <script setup>
-import { VAvatar, VBtn, VCard, VCardText, VChip, VCol, VDialog, VDivider, VIcon, VList, VListItem, VListItemTitle, VMenu, VPagination, VRow, VSelect, VSpacer, VTextField } from 'vuetify/components'
+import { VAvatar, VBtn, VCard, VCardText, VChip, VCol, VDialog, VDivider, VPagination, VRow, VSelect, VSpacer, VTextField } from 'vuetify/components'
 
 import estoque from '@/server/Estoque'
 import Dialog from './dialog.vue'
@@ -72,7 +72,7 @@ const headers = [
   { title: 'GRUPO', key: 'grupo_nome', sortable: true },
   { title: 'QUANTIDADE', key: 'quantidade_disponivel', sortable: true },
   { title: 'PREÇO', key: 'preco_consumidor', sortable: true },
-  { title: 'AÇÕES', key: 'actions', sortable: false }
+  { title: 'GAVETA', key: 'gaveta', sortable: true }
 ]
 
 // Função para formatar o preço
@@ -159,7 +159,7 @@ watch(searchQuery, () => {
               PREÇO
             </th>
             <th scope="col">
-              AÇÕES
+              GAVETA
             </th>
           </tr>
         </thead>
@@ -221,58 +221,70 @@ watch(searchQuery, () => {
               {{ formatarPreco(item.preco_consumidor) }}
             </td>
 
-            <!-- 👉 Actions -->
+            <!-- 👉 GAVETA -->
             <td>
-              <VBtn
-                size="x-small"
-                color="default"
-                variant="plain"
-                icon
-                @click.stop
-              >
-                <VIcon
-                  size="24"
-                  icon="mdi-dots-vertical"
-                />
-
-                <VMenu activator="parent">
-                  <VList>
-                    <VListItem @click="abrirDetalhes(item)">
-                      <template #prepend>
-                        <VIcon
-                          icon="mdi-eye-outline"
-                          :size="20"
-                          class="me-3"
-                        />
-                      </template>
-                      <VListItemTitle>Visualizar</VListItemTitle>
-                    </VListItem>
-
-                    <VListItem>
-                      <template #prepend>
-                        <VIcon
-                          icon="mdi-pencil-outline"
-                          :size="20"
-                          class="me-3"
-                        />
-                      </template>
-                      <VListItemTitle>Editar</VListItemTitle>
-                    </VListItem>
-
-                    <VListItem>
-                      <template #prepend>
-                        <VIcon
-                          icon="mdi-delete-outline"
-                          :size="20"
-                          class="me-3"
-                        />
-                      </template>
-                      <VListItemTitle>Excluir</VListItemTitle>
-                    </VListItem>
-                  </VList>
-                </VMenu>
-              </VBtn>
+              <div class="d-flex flex-column">
+                <h6 class="text-sm font-weight-medium">
+                  {{ item.local_estoque_id }}
+                </h6>
+                <span class="text-xs text-medium-emphasis">{{ item.gaveta }}</span>
+              </div>
             </td>
+
+            <!--
+              👉 Actions 
+              <td>
+              <VBtn
+              size="x-small"
+              color="default"
+              variant="plain"
+              icon
+              @click.stop
+              >
+              <VIcon
+              size="24"
+              icon="mdi-dots-vertical"
+              />
+
+              <VMenu activator="parent">
+              <VList>
+              <VListItem @click="abrirDetalhes(item)">
+              <template #prepend>
+              <VIcon
+              icon="mdi-eye-outline"
+              :size="20"
+              class="me-3"
+              />
+              </template>
+              <VListItemTitle>Visualizar</VListItemTitle>
+              </VListItem>
+
+              <VListItem>
+              <template #prepend>
+              <VIcon
+              icon="mdi-pencil-outline"
+              :size="20"
+              class="me-3"
+              />
+              </template>
+              <VListItemTitle>Editar</VListItemTitle>
+              </VListItem>
+
+              <VListItem>
+              <template #prepend>
+              <VIcon
+              icon="mdi-delete-outline"
+              :size="20"
+              class="me-3"
+              />
+              </template>
+              <VListItemTitle>Excluir</VListItemTitle>
+              </VListItem>
+              </VList>
+              </VMenu>
+              </VBtn>
+              </td>
+            -->
           </tr>
         </tbody>
 
@@ -330,6 +342,8 @@ watch(searchQuery, () => {
       <Dialog
         :item="itemSelecionado"
         :is-open="dialogDetalhes"
+        @close="dialogDetalhes = false"
+        @update:item="fetchItens"
       />
     </VDialog>
   </section>
