@@ -16,27 +16,44 @@
         <div class="info-list">
           <div>
             <span class="label">Código</span>
-            <p class="value">
-              {{ item.codigo }}
-            </p>
+            <VTextField
+              v-model="itemEditado.codigo"
+              density="compact"
+              variant="outlined"
+            />
           </div>
           <div>
             <span class="label">Nome</span>
-            <p class="value">
-              {{ item.nome }}
-            </p>
+            <VTextField
+              v-model="itemEditado.nome"
+              density="compact"
+              variant="outlined"
+            />
           </div>
           <div>
             <span class="label">Nome Curto</span>
-            <p class="value">
-              {{ item.nome_curto }}
-            </p>
+            <VTextField
+              v-model="itemEditado.nome_curto"
+              density="compact"
+              variant="outlined"
+            />
           </div>
           <div>
             <span class="label">Grupo/Subgrupo</span>
-            <p class="value">
-              {{ `${item.grupo_id}/${item.subgrupo_id}` }}
-            </p>
+            <div class="d-flex gap-2">
+              <VTextField
+                v-model="itemEditado.grupo_id"
+                density="compact"
+                variant="outlined"
+                class="flex-grow-1"
+              />
+              <VTextField
+                v-model="itemEditado.subgrupo_id"
+                density="compact"
+                variant="outlined"
+                class="flex-grow-1"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -47,40 +64,63 @@
         <div class="info-list">
           <div>
             <span class="label">Custo de Compra</span>
-            <p class="value">
-              {{ formatarPreco(item.custo_compra) }}
-            </p>
+            <VTextField
+              v-model="itemEditado.custo_compra"
+              density="compact"
+              variant="outlined"
+              type="number"
+              step="0.01"
+            />
           </div>
           <div>
             <span class="label">Percentual de Lucro</span>
-            <p class="value">
-              {{ `${item.percentual_lucro}%` }}
-            </p>
+            <VTextField
+              v-model="itemEditado.percentual_lucro"
+              density="compact"
+              variant="outlined"
+              type="number"
+            />
           </div>
           <div>
             <span class="label">Valor</span>
-            <p class="value">
-              {{ formatarPreco(item.valor) }}
-            </p>
+            <VTextField
+              v-model="itemEditado.valor"
+              density="compact"
+              variant="outlined"
+              type="number"
+              step="0.01"
+            />
           </div>
           <div class="price-grid">
             <div>
               <span class="label">Preço Consumidor</span>
-              <p class="value">
-                {{ formatarPreco(item.preco_consumidor) }}
-              </p>
+              <VTextField
+                v-model="itemEditado.preco_consumidor"
+                density="compact"
+                variant="outlined"
+                type="number"
+                step="0.01"
+              />
             </div>
             <div>
               <span class="label">Preço Revenda</span>
-              <p class="value">
-                {{ formatarPreco(item.preco_revenda) }}
-              </p>
+              <VTextField
+                v-model="itemEditado.preco_revenda"
+                density="compact"
+                variant="outlined"
+                type="number"
+                step="0.01"
+              />
             </div>
             <div>
               <span class="label">Outros Preços</span>
-              <p class="value">
-                {{ formatarPreco(item.preco_outros) }}
-              </p>
+              <VTextField
+                v-model="itemEditado.preco_outros"
+                density="compact"
+                variant="outlined"
+                type="number"
+                step="0.01"
+              />
             </div>
           </div>
         </div>
@@ -92,21 +132,30 @@
         <div class="stock-grid">
           <div>
             <span class="label">Quantidade Disponível</span>
-            <p class="value">
-              {{ item.quantidade_disponivel }}
-            </p>
+            <VTextField
+              v-model="itemEditado.quantidade_disponivel"
+              density="compact"
+              variant="outlined"
+              type="number"
+            />
           </div>
           <div>
             <span class="label">Lote Ideal</span>
-            <p class="value">
-              {{ item.lote_ideal }}
-            </p>
+            <VTextField
+              v-model="itemEditado.lote_ideal"
+              density="compact"
+              variant="outlined"
+              type="number"
+            />
           </div>
           <div>
             <span class="label">Quantidade Mínima</span>
-            <p class="value">
-              {{ item.quantidade_minima }}
-            </p>
+            <VTextField
+              v-model="itemEditado.quantidade_minima"
+              density="compact"
+              variant="outlined"
+              type="number"
+            />
           </div>
         </div>
       </div>
@@ -117,27 +166,35 @@
         <div class="location-grid">
           <div>
             <span class="label">Unidade</span>
-            <p class="value">
-              {{ item.unidade_id }}
-            </p>
+            <VTextField
+              v-model="itemEditado.unidade_id"
+              density="compact"
+              variant="outlined"
+            />
           </div>
           <div>
             <span class="label">Fabricante</span>
-            <p class="value">
-              {{ item.fabricante_id }}
-            </p>
+            <VTextField
+              v-model="itemEditado.fabricante_id"
+              density="compact"
+              variant="outlined"
+            />
           </div>
           <div>
             <span class="label">Local Estoque</span>
-            <p class="value">
-              {{ item.local_estoque_id }}
-            </p>
+            <VTextField
+              v-model="itemEditado.local_estoque_id"
+              density="compact"
+              variant="outlined"
+            />
           </div>
           <div>
             <span class="label">Gaveta</span>
-            <p class="value">
-              {{ item.gaveta }}
-            </p>
+            <VTextField
+              v-model="itemEditado.gaveta"
+              density="compact"
+              variant="outlined"
+            />
           </div>
         </div>
       </div>
@@ -146,22 +203,52 @@
       <h3 class="section-title">
         Observações
       </h3>
-      <p class="observation-text">
-        {{ item.observacoes }}
-      </p>
+      <VTextarea
+        v-model="itemEditado.observacoes"
+        density="compact"
+        variant="outlined"
+        rows="3"
+      />
     </div>
     <div class="footer">
       <div>
-        <span>Data Cadastro: </span><span>{{ item.data_cadastro }}</span>
+        <span>Data Cadastro: </span><span>{{ itemEditado.data_cadastro }}</span>
       </div>
       <div>
-        <span>Última Atualização: </span><span>{{ item.ultima_atualizacao }}</span>
+        <span>Última Atualização: </span><span>{{ itemEditado.ultima_atualizacao }}</span>
       </div>
     </div>
+    <div class="actions">
+      <VBtn
+        color="primary"
+        @click="salvarAlteracoes"
+      >
+        Salvar Alterações
+      </VBtn>
+      <VBtn
+        variant="outlined"
+        @click="$emit('close')"
+      >
+        Cancelar
+      </VBtn>
+    </div>
   </div>
+
+  <!-- Snackbar para mensagens -->
+  <VSnackbar
+    v-model="snackbar"
+    :color="snackbarColor"
+    location="bottom"
+    timeout="2000"
+  >
+    {{ snackbarText }}
+  </VSnackbar>
 </template>
 
 <script setup>
+import estoque from '@/server/Estoque'
+import { ref } from 'vue'
+
 const props = defineProps({
   isOpen: {
     type: Boolean,
@@ -196,9 +283,38 @@ const props = defineProps({
   }
 })
 
+const emit = defineEmits(['update:item', 'close'])
+
+// Cria uma cópia editável do item
+const itemEditado = ref({ ...props.item })
+
+// Estado do snackbar
+const snackbar = ref(false)
+const snackbarText = ref('')
+const snackbarColor = ref('success')
+
 // Função para formatar valores monetários
 const formatarPreco = preco => {
   return `R$ ${parseFloat(preco)}`
+}
+
+// Função para salvar as alterações
+const salvarAlteracoes = async () => {
+  try {
+    await estoque.atualizarItem(itemEditado.value.id, itemEditado.value)
+    snackbarText.value = 'Item atualizado com sucesso!'
+    snackbarColor.value = 'success'
+    snackbar.value = true
+    emit('update:item', itemEditado.value)
+    setTimeout(() => {
+      emit('close')
+    }, 2000)
+  } catch (error) {
+    console.error('Erro ao salvar alterações:', error)
+    snackbarText.value = 'Erro ao atualizar item. Tente novamente.'
+    snackbarColor.value = 'error'
+    snackbar.value = true
+  }
 }
 </script>
 
@@ -267,14 +383,11 @@ const formatarPreco = preco => {
 }
 
 .label {
+  display: block;
   color: #64748b;
   font-size: 14px;
   font-weight: 500;
-}
-
-.value {
-  color: #1a1a1a;
-  font-size: 15px;
+  margin-block-end: 4px;
 }
 
 .price-grid {
@@ -314,6 +427,16 @@ const formatarPreco = preco => {
   border-block-start-width: 1px;
   color: #64748b;
   font-size: 14px;
+  margin-block-start: 24px;
+  padding-block-start: 16px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  border-color: #e5e5e5;
+  border-block-start-width: 1px;
+  gap: 12px;
   margin-block-start: 24px;
   padding-block-start: 16px;
 }
