@@ -13,9 +13,125 @@ export default {
         }
       }
     ).then(response => {
+      
       return response
     }).catch(error => {
       console.error('Erro ao listar itens:', error)
+      throw error
+    })
+  },
+
+  listarGrupos: () => {
+    // Obtém o token do localStorage
+    const token = JSON.parse(localStorage.getItem('accessToken'))
+    
+    return API.get(
+      '/api/grupos',
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    ).then(response => {
+     
+      // Garante que estamos retornando os dados no formato correto
+      return {
+        data: Array.isArray(response.data) ? response.data : []
+      }
+    }).catch(error => {
+      console.error('Erro ao listar grupos:', error)
+      throw error
+    })
+  },
+
+  listarSubGrupos: () => {
+    // Obtém o token do localStorage
+    const token = JSON.parse(localStorage.getItem('accessToken'))
+    
+    return API.get(
+      '/api/subgrupos',
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    // eslint-disable-next-line sonarjs/no-identical-functions
+    ).then(response => {     
+      // Garante que estamos retornando os dados no formato correto
+      return {
+        data: Array.isArray(response.data) ? response.data : []
+      }
+    }).catch(error => {
+      console.error('Erro ao listar subgrupos:', error)
+      throw error
+    })
+  },
+
+  listarUnidades: () => {
+    // Obtém o token do localStorage
+    const token = JSON.parse(localStorage.getItem('accessToken'))
+    
+    return API.get(
+      '/api/unidades',
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    // eslint-disable-next-line sonarjs/no-identical-functions
+    ).then(response => {     
+      // Garante que estamos retornando os dados no formato correto
+      return {
+        data: Array.isArray(response.data) ? response.data : []
+      }
+    }).catch(error => {
+      console.error('Erro ao listar subgrupos:', error)
+      throw error
+    })
+  },
+
+  listarFabricantes: () => {
+    // Obtém o token do localStorage
+    const token = JSON.parse(localStorage.getItem('accessToken'))
+    
+    return API.get(
+      '/api/fabricantes',
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    // eslint-disable-next-line sonarjs/no-identical-functions
+    ).then(response => {     
+      // Garante que estamos retornando os dados no formato correto
+      return {
+        data: Array.isArray(response.data) ? response.data : []
+      }
+    }).catch(error => {
+      console.error('Erro ao listar fabricantes:', error)
+      throw error
+    })
+  },
+  
+  listarLocalEstoque: () => {
+    // Obtém o token do localStorage
+    const token = JSON.parse(localStorage.getItem('accessToken'))
+    
+    return API.get(
+      '/api/locais-estoque',
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    // eslint-disable-next-line sonarjs/no-identical-functions
+    ).then(response => {     
+      // Garante que estamos retornando os dados no formato correto
+      return {
+        data: Array.isArray(response.data) ? response.data : []
+      }
+    }).catch(error => {
+      console.error('Erro ao listar local_estoque:', error)
       throw error
     })
   },

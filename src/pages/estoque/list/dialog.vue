@@ -41,16 +41,22 @@
           <div>
             <span class="label">Grupo/Subgrupo</span>
             <div class="d-flex gap-2">
-              <VTextField
+              <VSelect
                 v-model="itemEditado.grupo_id"
-                density="compact"
+                :items="grupos"
+                item-title="nome"
+                item-value="id"
                 variant="outlined"
+                density="compact"
                 class="flex-grow-1"
               />
-              <VTextField
+              <VSelect
                 v-model="itemEditado.subgrupo_id"
-                density="compact"
+                :items="subgrupos"
+                item-title="nome"
+                item-value="id"
                 variant="outlined"
+                density="compact"
                 class="flex-grow-1"
               />
             </div>
@@ -166,24 +172,33 @@
         <div class="location-grid">
           <div>
             <span class="label">Unidade</span>
-            <VTextField
+            <VSelect
               v-model="itemEditado.unidade_id"
+              :items="unidades"
+              item-title="nome"
+              item-value="id"
               density="compact"
               variant="outlined"
             />
           </div>
           <div>
             <span class="label">Fabricante</span>
-            <VTextField
+            <VSelect
               v-model="itemEditado.fabricante_id"
+              :items="fabricantes"
+              item-title="nome"
+              item-value="id"
               density="compact"
               variant="outlined"
             />
           </div>
           <div>
             <span class="label">Local Estoque</span>
-            <VTextField
+            <VSelect
               v-model="itemEditado.local_estoque_id"
+              :items="localEstoque"
+              item-title="nome"
+              item-value="id"
               density="compact"
               variant="outlined"
             />
@@ -292,11 +307,135 @@ const itemEditado = ref({ ...props.item })
 const snackbar = ref(false)
 const snackbarText = ref('')
 const snackbarColor = ref('success')
+const grupos = ref([])
+const subgrupos = ref([])
+const unidades = ref([])
+const fabricantes = ref([])
+const localEstoque = ref([])
+
 
 // Função para formatar valores monetários
 const formatarPreco = preco => {
   return `R$ ${parseFloat(preco)}`
 }
+
+// Busca os grupos ao abrir o dialog
+const carregarGrupos = async () => {
+  try {
+    const response = await estoque.listarGrupos()
+     
+    if (response && response.data) {
+      grupos.value = response.data.map(grupo => ({
+        id: grupo.id,
+        nome: grupo.nome
+      }))
+    } else {
+      console.error('Dados recebidos inválidos:', response)
+      grupos.value = []
+    }
+      
+  } catch (error) {
+    console.error('Erro ao carregar grupos:', error)
+    snackbarText.value = 'Erro ao carregar grupos. Tente novamente.'
+    snackbarColor.value = 'error'
+    snackbar.value = true
+    grupos.value = []
+  }
+}
+
+const carregarSubGrupos = async () => {
+  try {
+    const response = await estoque.listarSubGrupos()
+    if (response && response.data) {
+      subgrupos.value = response.data.map(subgrupo => ({
+        id: subgrupo.id,
+        nome: subgrupo.nome 
+      }))
+    } else {
+      console.error('Dados recebidos inválidos:', response)
+      subgrupos.value = []
+    }
+  } catch (error) {
+    console.error('Erro ao carregar grupos:', error)
+    snackbarText.value = 'Erro ao carregar grupos. Tente novamente.'
+    snackbarColor.value = 'error'
+    snackbar.value = true
+    grupos.value = []
+  }
+}
+
+const carregarUnidades = async () => {
+  try {
+    const response = await estoque.listarUnidades()
+    if (response && response.data) {
+      unidades.value = response.data.map(unidades => ({
+        id: unidades.id,
+        nome: unidades.nome 
+      }))
+    } else {
+      console.error('Dados recebidos inválidos:', response)
+      subgrupos.value = []
+    }
+  } catch (error) {
+    console.error('Erro ao carregar grupos:', error)
+    snackbarText.value = 'Erro ao carregar grupos. Tente novamente.'
+    snackbarColor.value = 'error'
+    snackbar.value = true
+    grupos.value = []
+  }
+}
+
+const carregarFabricantes = async () => {
+  try {
+    const response = await estoque.listarFabricantes()
+    if (response && response.data) {
+      fabricantes.value = response.data.map(fabricantes => ({
+        id: fabricantes.id,
+        nome: fabricantes.nome 
+      }))
+    } else {
+      console.error('Dados recebidos inválidos:', response)
+      subgrupos.value = []
+    }
+  } catch (error) {
+    console.error('Erro ao carregar grupos:', error)
+    snackbarText.value = 'Erro ao carregar grupos. Tente novamente.'
+    snackbarColor.value = 'error'
+    snackbar.value = true
+    grupos.value = []
+  }
+}
+
+const carregarLocalEstoque = async () => {
+  try {
+    const response = await estoque.listarLocalEstoque()
+    if (response && response.data) {
+      localEstoque.value = response.data.map(localEstoque => ({
+        id: localEstoque.id,
+        nome: localEstoque.nome 
+      }))
+    } else {
+      console.error('Dados recebidos inválidos:', response)
+      subgrupos.value = []
+    }
+  } catch (error) {
+    console.error('Erro ao carregar grupos:', error)
+    snackbarText.value = 'Erro ao carregar grupos. Tente novamente.'
+    snackbarColor.value = 'error'
+    snackbar.value = true
+    grupos.value = []
+  }
+}
+
+
+// Executa carregarGrupos quando o componente é montado
+onBeforeMount(() => {
+  carregarGrupos()
+  carregarSubGrupos()
+  carregarUnidades()
+  carregarFabricantes()
+  carregarLocalEstoque()
+})
 
 // Função para salvar as alterações
 const salvarAlteracoes = async () => {
