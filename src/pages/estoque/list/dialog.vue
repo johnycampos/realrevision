@@ -54,6 +54,7 @@
                 class="flex-grow-1"
                 @update:model-value="(value) => {                  
                   abrirDialogCadastroGrupo(value)
+                  carregarSubGrupos()
                 }"
               />
               <VSelect
@@ -476,7 +477,9 @@ const carregarGrupos = async () => {
 
 const carregarSubGrupos = async () => {
   try {
-    const response = await estoque.listarSubgrupos()
+    subgrupos.value = []
+    console.log('carregando subgrupos', itemEditado.value.grupo_id)
+    const response = await estoque.listarSubgrupos(itemEditado.value.grupo_id)
     if (response && response.data) {
       subgrupos.value = response.data.map(subgrupo => ({
         id: subgrupo.id,
@@ -561,7 +564,7 @@ const carregarLocalEstoque = async () => {
 
 // Executa carregarGrupos quando o componente é montado
 onBeforeMount(() => {
-  carregarGrupos()
+  carregarGrupos() 
   carregarSubGrupos()
   carregarUnidades()
   carregarFabricantes()

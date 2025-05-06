@@ -44,12 +44,12 @@ export default {
     })
   },
 
-  listarSubgrupos: () => {
+  listarSubgrupos: grupoId => {
     // Obtém o token do localStorage
     const token = JSON.parse(localStorage.getItem('accessToken'))
     
     return API.get(
-      '/api/subgrupos',
+      `/api/subgrupos/${grupoId}`,
       {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -231,7 +231,8 @@ export default {
       '/api/subgrupos',
       {
         nome: subgrupo.nome,
-        descricao: subgrupo.descricao
+        descricao: subgrupo.descricao,
+        grupo_id: subgrupo.grupo_id
       },
       {
         headers: {
