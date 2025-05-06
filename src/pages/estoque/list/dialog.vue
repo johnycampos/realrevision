@@ -43,21 +43,36 @@
             <div class="d-flex gap-2">
               <VSelect
                 v-model="itemEditado.grupo_id"
-                :items="grupos"
+                :items="[
+                  { id: 'novo', nome: '+ Adicionar Grupo' },
+                  ...grupos
+                ]"
                 item-title="nome"
                 item-value="id"
                 variant="outlined"
                 density="compact"
                 class="flex-grow-1"
+                @update:model-value="(value) => {                  
+                  abrirDialogCadastroGrupo(value)
+                }"
               />
               <VSelect
                 v-model="itemEditado.subgrupo_id"
-                :items="subgrupos"
+                :items="[
+                  { id: 'novo', nome: '+ Adicionar Subgrupo' },
+                  ...subgrupos
+                ]"
                 item-title="nome"
                 item-value="id"
                 variant="outlined"
                 density="compact"
                 class="flex-grow-1"
+                @update:model-value="(value) => {
+                  if (value === 'novo') {
+                    dialogCadastroSubgrupo.value = true
+                    itemEditado.subgrupo_id = ''
+                  }
+                }"
               />
             </div>
           </div>
@@ -174,33 +189,60 @@
             <span class="label">Unidade</span>
             <VSelect
               v-model="itemEditado.unidade_id"
-              :items="unidades"
+              :items="[
+                { id: 'novo', nome: '+ Adicionar Unidade' },
+                ...unidades
+              ]"
               item-title="nome"
               item-value="id"
               density="compact"
               variant="outlined"
+              @update:model-value="(value) => {
+                if (value === 'novo') {
+                  dialogCadastroUnidade.value = true
+                  itemEditado.unidade_id = ''
+                }
+              }"
             />
           </div>
           <div>
             <span class="label">Fabricante</span>
             <VSelect
               v-model="itemEditado.fabricante_id"
-              :items="fabricantes"
+              :items="[
+                { id: 'novo', nome: '+ Adicionar Fabricante' },
+                ...fabricantes
+              ]"
               item-title="nome"
               item-value="id"
               density="compact"
               variant="outlined"
+              @update:model-value="(value) => {
+                if (value === 'novo') {
+                  dialogCadastroFabricante.value = true
+                  itemEditado.fabricante_id = ''
+                }
+              }"
             />
           </div>
           <div>
             <span class="label">Local Estoque</span>
             <VSelect
               v-model="itemEditado.local_estoque_id"
-              :items="localEstoque"
+              :items="[
+                { id: 'novo', nome: '+ Adicionar Local' },
+                ...localEstoque
+              ]"
               item-title="nome"
               item-value="id"
               density="compact"
               variant="outlined"
+              @update:model-value="(value) => {
+                if (value === 'novo') {
+                  dialogCadastroLocalEstoque.value = true
+                  itemEditado.local_estoque_id = ''
+                }
+              }"
             />
           </div>
           <div>
@@ -258,11 +300,24 @@
   >
     {{ snackbarText }}
   </VSnackbar>
+
+  <!-- Dialogs de Cadastro -->
+  <VDialog
+    v-model="dialogCadastroGrupo"
+    max-width="500"
+  >
+    <DialogCadastroGrupo
+      :is-open="dialogCadastroGrupo"
+      @close="dialogCadastroGrupo = false"
+      @cadastro-concluido="carregarGrupos"
+    />
+  </VDialog>
 </template>
 
 <script setup>
 import estoque from '@/server/Estoque'
 import { ref } from 'vue'
+import DialogCadastroGrupo from './DialogCadastroGrupo.vue'
 
 const props = defineProps({
   isOpen: {
@@ -312,7 +367,18 @@ const subgrupos = ref([])
 const unidades = ref([])
 const fabricantes = ref([])
 const localEstoque = ref([])
+const dialogCadastroGrupo = ref(false)
+const dialogCadastroSubgrupo = ref(false)
+const dialogCadastroUnidade = ref(false)
+const dialogCadastroFabricante = ref(false)
+const dialogCadastroLocalEstoque = ref(false)
 
+const abrirDialogCadastroGrupo = value => {
+  console.log('abrirDialogCadastroGrupo', value)
+  if (value === 'novo') {
+    dialogCadastroGrupo.value = true
+  }
+}
 
 // Função para formatar valores monetários
 const formatarPreco = preco => {
@@ -321,6 +387,7 @@ const formatarPreco = preco => {
 
 // Busca os grupos ao abrir o dialog
 const carregarGrupos = async () => {
+  console.log('carregando grupos')
   try {
     const response = await estoque.listarGrupos()
      
