@@ -24,6 +24,18 @@
         class="mb-4"
       />
     </div>
+    <div class="content">
+      <VSelect
+        v-model="novoSubgrupo.grupo_id"
+        :items="grupos"
+        item-title="nome"
+        item-value="id"
+        label="Grupo"
+        variant="outlined"
+        density="compact"
+        class="mb-4"
+      />
+    </div>
 
     <div class="actions">
       <VBtn
@@ -55,7 +67,7 @@
 
 <script setup>
 import estoque from '@/server/Estoque'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 const props = defineProps({
   isOpen: {
@@ -64,17 +76,39 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close', 'cadastro-concluido'])
+const emit = defineEmits(['close', 'cadastroConcluido'])
 
 const novoSubgrupo = ref({
   nome: '',
-  descricao: ''
+  descricao: '',
+  grupo_id: null
 })
 
+const grupos = ref([])
 const isLoading = ref(false)
 const snackbar = ref(false)
 const snackbarText = ref('')
 const snackbarColor = ref('success')
+
+// Função para carregar os grupos
+const carregarGrupos = async () => {
+  try {
+    const response = await estoque.listarGrupos()
+    if (response && response.data) {
+      grupos.value = response.data
+    }
+  } catch (error) {
+    console.error('Erro ao carregar grupos:', error)
+    snackbarText.value = 'Erro ao carregar grupos. Tente novamente.'
+    snackbarColor.value = 'error'
+    snackbar.value = true
+  }
+}
+
+// Carrega os grupos quando o componente é montado
+onMounted(() => {
+  carregarGrupos()
+})
 
 const salvarSubgrupo = async () => {
   try {
@@ -88,10 +122,10 @@ const salvarSubgrupo = async () => {
     // Limpa o formulário
     novoSubgrupo.value.nome = ''
     novoSubgrupo.value.descricao = ''
+    novoSubgrupo.value.grupo_id = null
     
     // Notifica o componente pai
-    // eslint-disable-next-line vue/custom-event-name-casing
-    emit('cadastro-concluido')
+    emit('cadastroConcluido')
     
     // Fecha o dialog após 2 segundos
     setTimeout(() => {
