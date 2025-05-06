@@ -44,7 +44,7 @@ export default {
     })
   },
 
-  listarSubGrupos: () => {
+  listarSubgrupos: () => {
     // Obtém o token do localStorage
     const token = JSON.parse(localStorage.getItem('accessToken'))
     
@@ -55,12 +55,8 @@ export default {
           'Authorization': `Bearer ${token}`
         }
       }
-    // eslint-disable-next-line sonarjs/no-identical-functions
-    ).then(response => {     
-      // Garante que estamos retornando os dados no formato correto
-      return {
-        data: Array.isArray(response.data) ? response.data : []
-      }
+    ).then(response => {
+      return response
     }).catch(error => {
       console.error('Erro ao listar subgrupos:', error)
       throw error
@@ -78,14 +74,10 @@ export default {
           'Authorization': `Bearer ${token}`
         }
       }
-    // eslint-disable-next-line sonarjs/no-identical-functions
-    ).then(response => {     
-      // Garante que estamos retornando os dados no formato correto
-      return {
-        data: Array.isArray(response.data) ? response.data : []
-      }
+    ).then(response => {
+      return response
     }).catch(error => {
-      console.error('Erro ao listar subgrupos:', error)
+      console.error('Erro ao listar unidades:', error)
       throw error
     })
   },
@@ -101,12 +93,8 @@ export default {
           'Authorization': `Bearer ${token}`
         }
       }
-    // eslint-disable-next-line sonarjs/no-identical-functions
-    ).then(response => {     
-      // Garante que estamos retornando os dados no formato correto
-      return {
-        data: Array.isArray(response.data) ? response.data : []
-      }
+    ).then(response => {
+      return response
     }).catch(error => {
       console.error('Erro ao listar fabricantes:', error)
       throw error
@@ -124,14 +112,10 @@ export default {
           'Authorization': `Bearer ${token}`
         }
       }
-    // eslint-disable-next-line sonarjs/no-identical-functions
-    ).then(response => {     
-      // Garante que estamos retornando os dados no formato correto
-      return {
-        data: Array.isArray(response.data) ? response.data : []
-      }
+    ).then(response => {
+      return response
     }).catch(error => {
-      console.error('Erro ao listar local_estoque:', error)
+      console.error('Erro ao listar locais de estoque:', error)
       throw error
     })
   },
@@ -235,6 +219,104 @@ export default {
       return response
     }).catch(error => {
       console.error('Erro ao criar grupo:', error)
+      throw error
+    })
+  },
+
+  criarSubgrupo: subgrupo => {
+    // Obtém o token do localStorage
+    const token = JSON.parse(localStorage.getItem('accessToken'))
+    
+    return API.post(
+      '/api/subgrupos',
+      {
+        nome: subgrupo.nome,
+        descricao: subgrupo.descricao
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    ).then(response => {
+      return response
+    }).catch(error => {
+      console.error('Erro ao criar subgrupo:', error)
+      throw error
+    })
+  },
+
+  criarUnidade: unidade => {
+    // Obtém o token do localStorage
+    const token = JSON.parse(localStorage.getItem('accessToken'))
+    
+    return API.post(
+      '/api/unidades',
+      {
+        nome: unidade.nome,
+        descricao: unidade.descricao,
+        sigla: unidade.sigla
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    ).then(response => {
+      return response
+    }).catch(error => {
+      console.error('Erro ao criar unidade:', error)
+      throw error
+    })
+  },
+
+  criarFabricante: fabricante => {
+    // Obtém o token do localStorage
+    const token = JSON.parse(localStorage.getItem('accessToken'))
+    
+    return API.post(
+      '/api/fabricantes',
+      {
+        nome: fabricante.nome,
+        cnpj: fabricante.cnpj,
+        contato: fabricante.contato,
+        telefone: fabricante.telefone,
+        email: fabricante.email,
+        observacoes: fabricante.observacoes
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    ).then(response => {
+      return response
+    }).catch(error => {
+      console.error('Erro ao criar fabricante:', error)
+      throw error
+    })
+  },
+
+  criarLocalEstoque: localEstoque => {
+    // Obtém o token do localStorage
+    const token = JSON.parse(localStorage.getItem('accessToken'))
+    
+    return API.post(
+      '/api/locais-estoque',
+      {
+        nome: localEstoque.nome,
+        descricao: localEstoque.descricao,
+        endereco: localEstoque.endereco
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    ).then(response => {
+      return response
+    }).catch(error => {
+      console.error('Erro ao criar local de estoque:', error)
       throw error
     })
   }
