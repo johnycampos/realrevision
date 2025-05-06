@@ -68,10 +68,7 @@
                 density="compact"
                 class="flex-grow-1"
                 @update:model-value="(value) => {
-                  if (value === 'novo') {
-                    dialogCadastroSubgrupo.value = true
-                    itemEditado.subgrupo_id = ''
-                  }
+                  abrirDialogCadastroSubgrupo(value)
                 }"
               />
             </div>
@@ -198,10 +195,7 @@
               density="compact"
               variant="outlined"
               @update:model-value="(value) => {
-                if (value === 'novo') {
-                  dialogCadastroUnidade.value = true
-                  itemEditado.unidade_id = ''
-                }
+                abrirDialogCadastroUnidade(value)
               }"
             />
           </div>
@@ -218,10 +212,7 @@
               density="compact"
               variant="outlined"
               @update:model-value="(value) => {
-                if (value === 'novo') {
-                  dialogCadastroFabricante.value = true
-                  itemEditado.fabricante_id = ''
-                }
+                abrirDialogCadastroFabricante(value)
               }"
             />
           </div>
@@ -238,10 +229,7 @@
               density="compact"
               variant="outlined"
               @update:model-value="(value) => {
-                if (value === 'novo') {
-                  dialogCadastroLocalEstoque.value = true
-                  itemEditado.local_estoque_id = ''
-                }
+                abrirDialogCadastroLocalEstoque(value)
               }"
             />
           </div>
@@ -312,12 +300,60 @@
       @cadastro-concluido="carregarGrupos"
     />
   </VDialog>
+
+  <VDialog
+    v-model="dialogCadastroSubgrupo"
+    max-width="500"
+  >
+    <DialogCadastroSubgrupo
+      :is-open="dialogCadastroSubgrupo"
+      @close="dialogCadastroSubgrupo = false"
+      @cadastro-concluido="carregarSubGrupos"
+    />
+  </VDialog>
+
+  <VDialog
+    v-model="dialogCadastroUnidade"
+    max-width="500"
+  >
+    <DialogCadastroUnidade
+      :is-open="dialogCadastroUnidade"
+      @close="dialogCadastroUnidade = false"
+      @cadastro-concluido="carregarUnidades"
+    />
+  </VDialog>
+
+  <VDialog
+    v-model="dialogCadastroFabricante"
+    max-width="500"
+  >
+    <DialogCadastroFabricante
+      :is-open="dialogCadastroFabricante"
+      @close="dialogCadastroFabricante = false"
+      @cadastro-concluido="carregarFabricantes"
+    />
+  </VDialog>
+
+  <VDialog
+    v-model="dialogCadastroLocalEstoque"
+    max-width="500"
+  >
+    <DialogCadastroLocalEstoque
+      :is-open="dialogCadastroLocalEstoque"
+      @close="dialogCadastroLocalEstoque = false"
+      @cadastro-concluido="carregarLocalEstoque"
+    />
+  </VDialog>
 </template>
 
 <script setup>
 import estoque from '@/server/Estoque'
 import { ref } from 'vue'
+import DialogCadastroFabricante from './DialogCadastroFabricante.vue'
 import DialogCadastroGrupo from './DialogCadastroGrupo.vue'
+import DialogCadastroLocalEstoque from './DialogCadastroLocalEstoque.vue'
+import DialogCadastroSubgrupo from './DialogCadastroSubgrupo.vue'
+import DialogCadastroUnidade from './DialogCadastroUnidade.vue'
 
 const props = defineProps({
   isOpen: {
@@ -380,6 +416,34 @@ const abrirDialogCadastroGrupo = value => {
   }
 }
 
+const abrirDialogCadastroSubgrupo = value => {
+  console.log('abrirDialogCadastroSubgrupo', value)
+  if (value === 'novo') {
+    dialogCadastroSubgrupo.value = true
+  }
+}
+
+const abrirDialogCadastroUnidade = value => {
+  console.log('abrirDialogCadastroUnidade', value)
+  if (value === 'novo') {
+    dialogCadastroUnidade.value = true
+  }
+}
+
+const abrirDialogCadastroFabricante = value => {
+  console.log('abrirDialogCadastroFabricante', value)
+  if (value === 'novo') {
+    dialogCadastroFabricante.value = true
+  }
+}
+
+const abrirDialogCadastroLocalEstoque = value => {
+  console.log('abrirDialogCadastroLocalEstoque', value)
+  if (value === 'novo') {
+    dialogCadastroLocalEstoque.value = true
+  }
+}
+
 // Função para formatar valores monetários
 const formatarPreco = preco => {
   return `R$ ${parseFloat(preco)}`
@@ -412,7 +476,7 @@ const carregarGrupos = async () => {
 
 const carregarSubGrupos = async () => {
   try {
-    const response = await estoque.listarSubGrupos()
+    const response = await estoque.listarSubgrupos()
     if (response && response.data) {
       subgrupos.value = response.data.map(subgrupo => ({
         id: subgrupo.id,
