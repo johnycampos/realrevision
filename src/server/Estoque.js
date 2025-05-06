@@ -214,5 +214,28 @@ export default {
       console.error('Erro ao criar item:', error)
       throw error
     })
+  },
+
+  criarGrupo: grupo => {
+    // Obtém o token do localStorage
+    const token = JSON.parse(localStorage.getItem('accessToken'))
+    
+    return API.post(
+      '/api/grupos',
+      {
+        nome: grupo.nome,
+        descricao: grupo.descricao
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    ).then(response => {
+      return response
+    }).catch(error => {
+      console.error('Erro ao criar grupo:', error)
+      throw error
+    })
   }
 } 
