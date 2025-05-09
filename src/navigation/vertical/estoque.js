@@ -13,7 +13,6 @@ export default [
       },
       
       { title: 'Listar', to: 'estoque-list' },
-      
     ],
   },
 ]
