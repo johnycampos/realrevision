@@ -156,6 +156,7 @@
               density="compact"
               variant="outlined"
               type="number"
+              readonly
             />
           </div>
           <div>
@@ -176,6 +177,16 @@
               type="number"
             />
           </div>
+        </div>
+        <div class="d-flex justify-end mt-4">
+          <VBtn
+            color="primary"
+            variant="outlined"
+            prepend-icon="mdi-pencil"
+            @click="abrirDialogAjusteQuantidade"
+          >
+            Atualizar Quantidade
+          </VBtn>
         </div>
       </div>
       <div class="info-card">
@@ -345,11 +356,73 @@
       @cadastro-concluido="carregarLocalEstoque"
     />
   </VDialog>
+
+  <!-- Dialog de Ajuste de Quantidade -->
+  <VDialog
+    v-model="dialogAjusteQuantidade"
+    max-width="400"
+  >
+    <VCard>
+      <VCardTitle>Ajustar Quantidade</VCardTitle>
+      <VCardText>
+        <div class="d-flex align-center mb-4">
+          <span class="text-subtitle-1 mr-4">Quantidade Atual:</span>
+          <span class="text-h6">{{ itemEditado.quantidade_disponivel }}</span>
+        </div>
+        <VTextField
+          v-model.number="quantidadeAjuste"
+          label="Quantidade para Ajuste"
+          type="number"
+          density="compact"
+          variant="outlined"
+          class="mb-4"
+        />
+        <VRadioGroup
+          v-model="tipoAjuste"
+          class="mb-4"
+        >
+          <VRadio
+            value="adicionar"
+            label="Adicionar"
+          />
+          <VRadio
+            value="remover"
+            label="Remover"
+          />
+        </VRadioGroup>
+        <div class="d-flex align-center">
+          <span class="text-subtitle-1 mr-4">Quantidade Final:</span>
+          <span
+            class="text-h6"
+            :class="{'text-error': quantidadeFinal < 0}"
+          >
+            {{ quantidadeFinal }}
+          </span>
+        </div>
+      </VCardText>
+      <VCardActions>
+        <VSpacer />
+        <VBtn
+          color="primary"
+          :disabled="quantidadeFinal < 0"
+          @click="aplicarAjusteQuantidade"
+        >
+          Aplicar
+        </VBtn>
+        <VBtn
+          variant="outlined"
+          @click="dialogAjusteQuantidade = false"
+        >
+          Cancelar
+        </VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
 </template>
 
 <script setup>
 import estoque from '@/server/Estoque'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import DialogCadastroFabricante from './DialogCadastroFabricante.vue'
 import DialogCadastroGrupo from './DialogCadastroGrupo.vue'
 import DialogCadastroLocalEstoque from './DialogCadastroLocalEstoque.vue'
@@ -409,6 +482,18 @@ const dialogCadastroSubgrupo = ref(false)
 const dialogCadastroUnidade = ref(false)
 const dialogCadastroFabricante = ref(false)
 const dialogCadastroLocalEstoque = ref(false)
+const dialogAjusteQuantidade = ref(false)
+const quantidadeAjuste = ref(0)
+const tipoAjuste = ref('adicionar')
+
+// Computed para calcular a quantidade final
+const quantidadeFinal = computed(() => {
+  const ajuste = tipoAjuste.value === 'adicionar' 
+    ? quantidadeAjuste.value 
+    : -quantidadeAjuste.value
+  
+  return itemEditado.value.quantidade_disponivel + ajuste
+})
 
 const abrirDialogCadastroGrupo = value => {
   console.log('abrirDialogCadastroGrupo', value)
@@ -443,6 +528,12 @@ const abrirDialogCadastroLocalEstoque = value => {
   if (value === 'novo') {
     dialogCadastroLocalEstoque.value = true
   }
+}
+
+const abrirDialogAjusteQuantidade = () => {
+  quantidadeAjuste.value = 0
+  tipoAjuste.value = 'adicionar'
+  dialogAjusteQuantidade.value = true
 }
 
 // Função para formatar valores monetários
@@ -561,6 +652,35 @@ const carregarLocalEstoque = async () => {
   }
 }
 
+const aplicarAjusteQuantidade = async () => {
+  if (quantidadeFinal.value < 0) {
+    snackbarText.value = 'A quantidade não pode ficar negativa!'
+    snackbarColor.value = 'error'
+    snackbar.value = true
+    
+    return
+  }
+
+  try {
+    await estoque.atualizarEstoque(itemEditado.value.id, {
+      quantidade: quantidadeAjuste.value,
+      operacao: tipoAjuste.value === 'adicionar' ? 'adicionar' : 'remover'
+    })
+
+    // Atualiza o valor na tela
+    itemEditado.value.quantidade_disponivel = quantidadeFinal.value
+    dialogAjusteQuantidade.value = false
+    
+    snackbarText.value = 'Quantidade ajustada com sucesso!'
+    snackbarColor.value = 'success'
+    snackbar.value = true
+  } catch (error) {
+    console.error('Erro ao ajustar quantidade:', error)
+    snackbarText.value = 'Erro ao ajustar quantidade. Tente novamente.'
+    snackbarColor.value = 'error'
+    snackbar.value = true
+  }
+}
 
 // Executa carregarGrupos quando o componente é montado
 onBeforeMount(() => {
