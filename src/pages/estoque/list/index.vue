@@ -15,6 +15,45 @@ const itemSelecionado = ref(null)
 const dialogDetalhes = ref(false)
 const dialogCriar = ref(false)
 const isLoading = ref(false)
+const ordenacaoSelecionada = ref('')
+const ordemCrescente = ref(true)
+
+// Opções de ordenação
+const opcoesOrdenacao = [
+  { title: 'Código', value: 'codigo' },
+  { title: 'Nome', value: 'nome' },
+  { title: 'Grupo', value: 'grupo_nome' },
+  { title: 'Quantidade', value: 'quantidade_disponivel' },
+  { title: 'Preço', value: 'preco_consumidor' },
+  { title: 'Gaveta', value: 'gaveta' }
+]
+
+// Função para ordenar os itens
+const ordenarItens = itens => {
+  if (!ordenacaoSelecionada.value) return itens
+
+  return [...itens].sort((a, b) => {
+    const key = ordenacaoSelecionada.value
+    const desc = !ordemCrescente.value
+
+    let valueA = a[key]
+    let valueB = b[key]
+
+    // Tratamento especial para valores numéricos
+    if (typeof valueA === 'number' || !isNaN(Number(valueA))) {
+      valueA = Number(valueA)
+      valueB = Number(valueB)
+    } else {
+      valueA = String(valueA).toLowerCase()
+      valueB = String(valueB).toLowerCase()
+    }
+
+    if (valueA < valueB) return desc ? 1 : -1
+    if (valueA > valueB) return desc ? -1 : 1
+    
+    return 0
+  })
+}
 
 // 👉 Fetching itens
 const fetchItens = async () => {
@@ -36,22 +75,25 @@ onMounted(() => {
   fetchItens()
 })
 
-// Computed para itens filtrados
+// Computed para itens filtrados e ordenados
 const itensFiltrados = computed(() => {
   const query = searchQuery.value.toLowerCase()
   
-  if (!query) return itens.value
+  let filtered = itens.value
+  if (query) {
+    filtered = itens.value.filter(item => {
+      return (
+        item.codigo.toLowerCase().includes(query) ||
+        item.nome.toLowerCase().includes(query) ||
+        item.nome_curto.toLowerCase().includes(query) ||
+        item.grupo_nome.toLowerCase().includes(query) ||
+        item.subgrupo_nome.toLowerCase().includes(query) ||
+        (item.observacoes && item.observacoes.toLowerCase().includes(query))
+      )
+    })
+  }
 
-  return itens.value.filter(item => {
-    return (
-      item.codigo.toLowerCase().includes(query) ||
-      item.nome.toLowerCase().includes(query) ||
-      item.nome_curto.toLowerCase().includes(query) ||
-      item.grupo_nome.toLowerCase().includes(query) ||
-      item.subgrupo_nome.toLowerCase().includes(query) ||
-      (item.observacoes && item.observacoes.toLowerCase().includes(query))
-    )
-  })
+  return ordenarItens(filtered)
 })
 
 // Computed para itens paginados
@@ -135,7 +177,26 @@ watch(searchQuery, () => {
       <VCardText class="d-flex flex-wrap gap-4">
         <VSpacer />
 
-        <div class="app-user-search-filter d-flex align-center">
+        <div class="d-flex align-center gap-4">
+          <!-- 👉 Ordenação -->
+          <VSelect
+            v-model="ordenacaoSelecionada"
+            :items="opcoesOrdenacao"
+            label="Ordenar por"
+            density="compact"
+            variant="outlined"
+            class="w-25"
+            clearable
+          />
+
+          <!-- 👉 Direção da ordenação -->
+          <VBtn
+            v-if="ordenacaoSelecionada"
+            :icon="ordemCrescente ? 'mdi-sort-ascending' : 'mdi-sort-descending'"
+            variant="text"
+            @click="ordemCrescente = !ordemCrescente"
+          />
+
           <!-- 👉 Add item button -->
           <VBtn @click="abrirCriarItem">
             Adicionar Item
