@@ -214,7 +214,7 @@ watch(searchQuery, () => {
             <!-- 👉 Quantidade -->
             <td>
               <VChip
-                color="success"
+                :color="item.quantidade_disponivel > item.quantidade_minima ? 'success' : 'error'"
                 size="small"
                 class="text-capitalize"
               >
