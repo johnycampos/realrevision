@@ -6,5 +6,7 @@ import estoque from './estoque'
 // import forms from './forms'
 // import others from './others'
 // import uiElements from './ui-elements'
+import crm from './crm'
 import vendas from './vendas'
-export default [...estoque, ...vendas]
+
+export default [...estoque, ...vendas, ...crm]
