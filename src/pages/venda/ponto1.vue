@@ -319,6 +319,7 @@
 
 <script setup>
 import Estoque from '@/server/Estoque'
+import Vendas from '@/server/Vendas'
 import { computed, onMounted, ref } from 'vue'
 
 // Estado reativo
@@ -486,11 +487,37 @@ const applyDiscount = () => {
   discountValue.value = Math.min(Math.max(0, discount), 100)
 }
 
-const finalizeSale = () => {
-  showSnackbar('Venda finalizada com sucesso!', 'success')
-  clearCart()
-  paymentMethod.value = null
-  cashAmount.value = ''
+const finalizeSale = async () => {
+  try {
+    // Prepara os dados da venda
+    const dadosVenda = {
+      loja_id: 1, // TODO: Pegar da configuração do sistema
+      vendedor_id: 1, // TODO: Pegar do usuário logado
+      forma_pagamento: paymentMethods.find(m => m.value === paymentMethod.value).label,
+      parcelas: null, // TODO: Implementar quando houver cartão de crédito
+      observacoes: 'Venda realizada na loja principal',
+      valor_total: calculateTotal(),
+      itens: cartItems.value.map(item => ({
+        item_id: item.id,
+        quantidade: item.quantity,
+        preco_unitario: item.price
+      }))
+    }
+
+    // Cria a venda
+    await Vendas.criarVenda(dadosVenda)
+
+    showSnackbar('Venda finalizada com sucesso!', 'success')
+    clearCart()
+    paymentMethod.value = null
+    cashAmount.value = ''
+    
+    // Recarrega os produtos para atualizar o estoque
+    await loadProducts()
+  } catch (error) {
+    console.error('Erro ao finalizar venda:', error)
+    showSnackbar('Erro ao finalizar venda. Tente novamente.', 'error')
+  }
 }
 
 const showSnackbar = (text, color = 'success') => {
