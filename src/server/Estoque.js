@@ -9,7 +9,7 @@ export default {
       '/api/itens',
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
@@ -29,7 +29,7 @@ export default {
       '/api/grupos',
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
@@ -52,7 +52,7 @@ export default {
       `/api/subgrupos/${grupoId}`,
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
@@ -71,7 +71,7 @@ export default {
       '/api/unidades',
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
@@ -90,7 +90,7 @@ export default {
       '/api/fabricantes',
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
@@ -109,7 +109,7 @@ export default {
       '/api/locais-estoque',
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
@@ -149,7 +149,7 @@ export default {
       },
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
@@ -189,7 +189,7 @@ export default {
       },
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
@@ -212,7 +212,7 @@ export default {
       },
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
@@ -236,7 +236,7 @@ export default {
       },
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
@@ -260,7 +260,7 @@ export default {
       },
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
@@ -287,7 +287,7 @@ export default {
       },
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
@@ -311,13 +311,36 @@ export default {
       },
       {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `${token}`
         }
       }
     ).then(response => {
       return response
     }).catch(error => {
       console.error('Erro ao criar local de estoque:', error)
+      throw error
+    })
+  },
+
+  atualizarEstoque: (id, dados) => {
+    // Obtém o token do localStorage
+    const token = JSON.parse(localStorage.getItem('accessToken'))
+    
+    return API.patch(
+      `/api/itens/${id}/estoque`,
+      {
+        quantidade: dados.quantidade,
+        operacao: dados.operacao
+      },
+      {
+        headers: {
+          'Authorization': `${token}`
+        }
+      }
+    ).then(response => {
+      return response
+    }).catch(error => {
+      console.error('Erro ao atualizar estoque:', error)
       throw error
     })
   }
