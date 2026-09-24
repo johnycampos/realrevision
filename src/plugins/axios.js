@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const axiosIns = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
 })
 
 // Interceptor para adicionar o cabeçalho Authorization com prefixo Bearer

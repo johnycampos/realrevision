@@ -10,5 +10,16 @@ export default {
         console.error('Erro ao criar venda:', error)
         throw error
       })
-  }
+  },
+
+  listarVendas: (filtros = {}) => {
+    return API.get('/api/vendas', { params: filtros })
+      .then(response => {
+        return response
+      })
+      .catch(error => {
+        console.error('Erro ao listar vendas:', error)
+        throw error
+      })
+  },
 }

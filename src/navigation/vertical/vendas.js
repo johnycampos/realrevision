@@ -3,6 +3,15 @@ export default [
     title: 'Vendas',
     menuKey: 'vendas',
     icon: { icon: 'mdi-cart-outline' },
-    to: 'venda-ponto1'
+    children: [
+      {
+        title: 'PDV (Novo)',
+        to: 'venda-ponto1',
+      },
+      {
+        title: 'Histórico de Vendas',
+        to: 'venda-historico',
+      },
+    ],
   },
 ]
