@@ -1,7 +1,5 @@
 import axios from 'axios'
 
-//const API_URL = 'https://backendnode-cu2o.onrender.com'
-
 const API_URL = import.meta.env.VITE_API_URL
 
 const API = axios.create({
@@ -16,5 +14,27 @@ const API = axios.create({
     'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE,PATCH,OPTIONS',
   },
 })
-export { API, API_URL }
 
+// Interceptor para injetar Authorization Bearer
+API.interceptors.request.use(config => {
+  const rawToken = localStorage.getItem('accessToken')
+  if (rawToken) {
+    let token = rawToken
+    try {
+      token = JSON.parse(rawToken)
+    } catch (e) {
+      // Já é string pura
+    }
+    config.headers = config.headers || {}
+    if (!config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`
+    } else if (!config.headers.Authorization.startsWith('Bearer ')) {
+      config.headers.Authorization = `Bearer ${config.headers.Authorization}`
+    }
+  }
+  return config
+}, error => {
+  return Promise.reject(error)
+})
+
+export { API, API_URL }
