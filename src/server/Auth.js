@@ -45,6 +45,12 @@ export default {
       console.error('Error in API call:', error)
       throw error
     }),
-  
 
+  obterMe: () =>
+    API.get('/api/auth/me')
+      .then(response => response)
+      .catch(error => {
+        console.error('Error in /auth/me call:', error)
+        throw error
+      }),
 }

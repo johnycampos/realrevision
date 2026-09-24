@@ -1,5 +1,7 @@
 <script setup>
-import navItems from '@/navigation/vertical'
+import { ref, onMounted } from 'vue'
+import { getNavItemsForUser } from '@/navigation/vertical'
+import Auth from '@/server/Auth'
 
 // Composable
 import { useSkins } from '@core/composable/useSkins'
@@ -18,6 +20,28 @@ import { VerticalNavLayout } from '@layouts'
 const {appRouteTransition, isLessThanOverlayNavBreakpoint} = useThemeConfig()
 const {width: windowWidth} = useWindowSize()
 const {layoutAttrs, injectSkinClasses} = useSkins()
+
+const navItems = ref(getNavItemsForUser())
+
+// Sincroniza dados e menus permitidos do usuário autenticado no backend
+onMounted(async () => {
+  try {
+    const response = await Auth.obterMe()
+    if (response && response.data) {
+      if (response.data.menusChaves) {
+        localStorage.setItem('userMenus', JSON.stringify(response.data.menusChaves))
+      }
+      if (response.data.user) {
+        const rawUser = localStorage.getItem('userData')
+        const currentUser = rawUser ? JSON.parse(rawUser) : {}
+        localStorage.setItem('userData', JSON.stringify({ ...currentUser, ...response.data.user }))
+      }
+      navItems.value = getNavItemsForUser()
+    }
+  } catch (e) {
+    console.warn('Não foi possível sincronizar menus via /auth/me:', e)
+  }
+})
 
 // ℹ️ This will inject classes in body tag for accurate styling
 injectSkinClasses()

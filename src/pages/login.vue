@@ -34,11 +34,13 @@ const login = () => {
 
     console.log(r)
 
-    const {accessToken, userData, userAbilities} = r.data
+    const {accessToken, userData, userAbilities, menusChaves, menus} = r.data
     localStorage.setItem('userAbilities', JSON.stringify(userAbilities))
     ability.update(userAbilities)
     localStorage.setItem('userData', JSON.stringify(userData))
     localStorage.setItem('accessToken', JSON.stringify(accessToken))
+    const userMenus = menusChaves || (userData && userData.menus) || (menus ? menus.map(m => m.chave) : [])
+    localStorage.setItem('userMenus', JSON.stringify(userMenus))
     if (route.query.to)
       router.replace(String(route.query.to))
     else

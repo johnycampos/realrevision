@@ -1,7 +1,8 @@
 export default [
   {
     title: 'Vendas',
-    icon: { icon: 'mdi-package-variant' },
-    title: 'Vendas', to: 'venda-ponto1'
+    menuKey: 'vendas',
+    icon: { icon: 'mdi-cart-outline' },
+    to: 'venda-ponto1'
   },
 ]

@@ -1,7 +1,8 @@
 export default [
   {
-    title: 'Crm',
-    icon: { icon: 'mdi-package-variant' },
-    title: 'DashBoard', to: 'dashboards-crmrealrevision'
+    title: 'Dashboard',
+    menuKey: 'dashboard',
+    icon: { icon: 'mdi-chart-line' },
+    to: 'dashboards-crmrealrevision'
   },
 ]
