@@ -31,7 +31,7 @@ export const MENU_TO_ROUTE = {
   estoque: 'estoque-list',
   vendas: 'venda-ponto1',
   usuarios: 'user-list',
-  configuracoes: 'pages-account-settings-tab-account',
+  configuracoes: 'configuracoes',
   relatorios: 'charts-apex-chart',
 }
 
