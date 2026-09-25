@@ -1,7 +1,6 @@
 import crm from './crm'
 import estoque from './estoque'
 import vendas from './vendas'
-import usuarios from './usuarios'
 import configuracoes from './configuracoes'
 import relatorios from './relatorios'
 
@@ -9,7 +8,6 @@ export const allNavItems = [
   ...crm,
   ...estoque,
   ...vendas,
-  ...usuarios,
   ...configuracoes,
   ...relatorios,
 ]
