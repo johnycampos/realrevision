@@ -89,7 +89,7 @@ const avatarBadgeProps = {
           <VDivider class="my-2" />
 
           <!-- 👉 Profile -->
-          <VListItem :to="{ name: 'user-view-id', params: { id: 21 } }">
+          <VListItem :to="{ name: 'configuracoes' }">
             <template #prepend>
               <VIcon
                 class="me-2"
