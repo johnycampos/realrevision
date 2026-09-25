@@ -608,7 +608,7 @@ onMounted(() => {
   bottom: 16px;
   left: 16px;
   right: 16px;
-  z-index: 99;
+  z-index: 10;
 }
 
 .v-list-item {

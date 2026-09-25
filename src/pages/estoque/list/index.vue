@@ -482,13 +482,15 @@ watch(searchQuery, () => {
 }
 </style>
 
-<style lang="scss">
+<style scoped>
 .table-responsive {
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+</style>
 
+<style lang="scss">
 .user-pagination-select {
   .v-field__input,
   .v-field__append-inner {
