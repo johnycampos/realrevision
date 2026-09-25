@@ -1,13 +1,11 @@
+<route lang="yaml">
+meta:
+  menuKey: configuracoes
+</route>
+
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import usuariosApi from '@/server/Usuarios'
-
-// Metadados da rota para proteção de navegação
-definePage({
-  meta: {
-    menuKey: 'configuracoes',
-  },
-})
 
 const currentUser = computed(() => {
   try {

@@ -1,14 +1,13 @@
+<route lang="yaml">
+meta:
+  menuKey: vendas
+</route>
+
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import vendasApi from '@/server/Vendas'
 import usuariosApi from '@/server/Usuarios'
-
-definePage({
-  meta: {
-    menuKey: 'vendas',
-  },
-})
 
 const router = useRouter()
 

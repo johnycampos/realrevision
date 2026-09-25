@@ -1,16 +1,14 @@
+<route lang="yaml">
+meta:
+  menuKey: dashboard
+</route>
+
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import VueApexCharts from 'vue3-apexcharts'
 import dashboardApi from '@/server/Dashboard'
 import usuariosApi from '@/server/Usuarios'
-
-// Metadados de rota para autorização por menu
-definePage({
-  meta: {
-    menuKey: 'dashboard',
-  },
-})
 
 const router = useRouter()
 
