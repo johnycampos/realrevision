@@ -454,7 +454,7 @@ onMounted(() => {
           color="error"
           prepend-icon="mdi-file-pdf-box"
           size="large"
-          class="me-2"
+          class="w-100 w-md-auto"
           :disabled="loadingVendas || dadosVendas.vendas.length === 0"
           @click="exportarPdfVendas"
         >
@@ -465,7 +465,7 @@ onMounted(() => {
           color="success"
           prepend-icon="mdi-file-pdf-box"
           size="large"
-          class="me-2"
+          class="w-100 w-md-auto"
           :disabled="loadingEstoque || dadosEstoque.itens.length === 0"
           @click="exportarPdfEstoque"
         >

@@ -1,96 +1,127 @@
 <template>
   <div>
-    <VContainer fluid>
+    <VContainer fluid class="px-2 px-sm-4">
+      <!-- Tabs Mobile para alternar entre Produtos e Carrinho -->
+      <VTabs
+        v-if="smAndDown"
+        v-model="tabMobile"
+        grow
+        color="primary"
+        class="mb-4 bg-surface rounded elevation-1"
+      >
+        <VTab value="produtos">
+          <VIcon icon="mdi-magnify" class="me-1" />
+          Produtos ({{ products.length }})
+        </VTab>
+        <VTab value="carrinho">
+          <VBadge
+            :content="cartItems.length"
+            :model-value="cartItems.length > 0"
+            color="primary"
+            class="me-2"
+          >
+            <VIcon icon="mdi-cart" />
+          </VBadge>
+          Carrinho
+        </VTab>
+      </VTabs>
+
       <VRow>
         <!-- Painel Esquerdo (Produtos) -->
         <VCol
+          v-if="!smAndDown || tabMobile === 'produtos'"
           cols="12"
           md="7"
         >
           <VCard class="mb-4">
-            <VCardTitle>
-              Produtos
-              <VSpacer />
+            <VCardTitle class="d-flex flex-wrap align-center justify-space-between gap-2 py-3 px-4">
+              <span class="text-h6 font-weight-bold">Produtos</span>
               <VTextField
                 v-model="searchQuery"
-                append-icon="mdi-magnify"
-                label="Código de barras, código, referência ou descrição do item..."
+                append-inner-icon="mdi-magnify"
+                label="Código, referência ou descrição..."
                 variant="outlined"
                 density="compact"
                 hide-details
-                class="ml-2"
+                class="w-100 w-sm-auto flex-grow-1"
+                style="min-width: 200px;"
                 clearable
               />
             </VCardTitle>
 
-            <VCardText>
+            <VCardText class="pa-2 pa-sm-4">
               <VProgressLinear
                 v-if="loading"
                 indeterminate
                 color="primary"
               />
               <div v-else>
-                <VTable>
-                  <thead>
-                    <tr>
-                      <th
-                        v-for="header in productHeaders"
-                        :key="header.key"
-                        :class="header.align"
-                      >
-                        {{ header.title }}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="item in paginatedProducts"
-                      :key="item.id"
-                    >
-                      <td>{{ item.codigo }}</td>
-                      <td>{{ item.nome }}</td>
-                      <td class="text-end">
-                        {{ formatCurrency(item.preco_consumidor) }}
-                      </td>
-                      <td class="text-end">
-                        {{ item.quantidade_disponivel }}
-                      </td>
-                      <td class="text-center">
-                        <VBtn
-                          color="primary"
-                          size="small"
-                          icon
-                          :disabled="item.quantidade_disponivel <= 0"
-                          @click="addToCart(item)"
+                <div class="table-responsive">
+                  <VTable density="compact" class="text-no-wrap">
+                    <thead>
+                      <tr>
+                        <th
+                          v-for="header in productHeaders"
+                          :key="header.key"
+                          :class="header.align"
                         >
-                          <VIcon>mdi-cart-plus</VIcon>
-                        </VBtn>
-                      </td>
-                    </tr>
-                  </tbody>
-                </VTable>
+                          {{ header.title }}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="item in paginatedProducts"
+                        :key="item.id"
+                      >
+                        <td class="font-weight-medium">{{ item.codigo }}</td>
+                        <td>{{ item.nome }}</td>
+                        <td class="text-end font-weight-bold">
+                          {{ formatCurrency(item.preco_consumidor) }}
+                        </td>
+                        <td class="text-end">
+                          <VChip
+                            size="x-small"
+                            :color="item.quantidade_disponivel > 0 ? 'success' : 'error'"
+                            variant="tonal"
+                          >
+                            {{ item.quantidade_disponivel }}
+                          </VChip>
+                        </td>
+                        <td class="text-center">
+                          <VBtn
+                            color="primary"
+                            size="small"
+                            icon="mdi-cart-plus"
+                            :disabled="item.quantidade_disponivel <= 0"
+                            title="Adicionar ao carrinho"
+                            @click="addToCart(item)"
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </VTable>
+                </div>
 
                 <!-- Paginação -->
-                <div class="d-flex justify-center align-center mt-4">
+                <div class="d-flex justify-center align-center mt-4 flex-wrap gap-2">
                   <VBtn
-                    icon
+                    icon="mdi-chevron-left"
+                    size="small"
                     :disabled="currentPage === 1"
                     @click="prevPage"
-                  >
-                    <VIcon>mdi-chevron-left</VIcon>
-                  </VBtn>
+                  />
                   
-                  <span class="mx-4">
+                  <span class="mx-2 text-caption">
                     Página {{ currentPage }} de {{ totalPages }}
                   </span>
                   
                   <VBtn
-                    icon
+                    icon="mdi-chevron-right"
+                    size="small"
                     :disabled="currentPage === totalPages"
                     @click="nextPage"
-                  >
-                    <VIcon>mdi-chevron-right</VIcon>
-                  </VBtn>
+                  />
                 </div>
               </div>
             </VCardText>
@@ -99,64 +130,62 @@
 
         <!-- Painel Direito (Carrinho) -->
         <VCol
+          v-if="!smAndDown || tabMobile === 'carrinho'"
           cols="12"
           md="5"
         >
           <VCard class="mb-4">
-            <VCardTitle>
-              Carrinho
-              <VSpacer />
+            <VCardTitle class="d-flex align-center justify-space-between py-3 px-4">
+              <span class="text-h6 font-weight-bold">Carrinho</span>
               <VChip
                 color="primary"
                 text-color="white"
+                size="small"
               >
-                {{ cartItems.length }} itens
+                {{ cartItems.length }} {{ cartItems.length === 1 ? 'item' : 'itens' }}
               </VChip>
             </VCardTitle>
 
-            <VCardText>
-              <VList v-if="cartItems.length > 0">
+            <VCardText class="pa-3 pa-sm-4">
+              <VList v-if="cartItems.length > 0" class="pa-0">
                 <VListItem
                   v-for="(item, index) in cartItems"
                   :key="index"
-                  class="mb-2"
+                  class="mb-2 border rounded pa-2"
                 >
-                  <VListItemTitle>{{ item.nome }}</VListItemTitle>
+                  <VListItemTitle class="font-weight-medium">{{ item.nome }}</VListItemTitle>
                   <VListItemSubtitle>
                     {{ formatCurrency(item.price) }} × {{ item.quantity }}
                   </VListItemSubtitle>
 
                   <template #append>
-                    <div class="d-flex align-center">
-                      <div class="mr-2 font-weight-bold">
+                    <div class="d-flex align-center gap-1">
+                      <div class="me-2 font-weight-bold text-success text-body-2">
                         {{ formatCurrency(item.price * item.quantity) }}
                       </div>
                       
-                      <div>
+                      <div class="d-flex align-center">
                         <VBtn
-                          icon
-                          density="compact"
+                          icon="mdi-minus"
+                          size="x-small"
+                          variant="tonal"
                           @click="decrementItem(index)"
-                        >
-                          <VIcon>mdi-minus</VIcon>
-                        </VBtn>
-                        
+                        />
+                        <span class="mx-1 text-caption font-weight-bold">{{ item.quantity }}</span>
                         <VBtn
-                          icon
-                          density="compact"
-                          color="error"
-                          @click="removeCartItem(index)"
-                        >
-                          <VIcon>mdi-delete</VIcon>
-                        </VBtn>
-                        
-                        <VBtn
-                          icon
-                          density="compact"
+                          icon="mdi-plus"
+                          size="x-small"
+                          variant="tonal"
                           @click="incrementItem(index)"
-                        >
-                          <VIcon>mdi-plus</VIcon>
-                        </VBtn>
+                        />
+                        <VBtn
+                          icon="mdi-delete"
+                          size="x-small"
+                          color="error"
+                          variant="text"
+                          class="ms-1"
+                          @click="removeCartItem(index)"
+                        />
                       </div>
                     </div>
                   </template>
@@ -165,74 +194,69 @@
 
               <div
                 v-else
-                class="text-center pa-4"
+                class="text-center py-8 text-medium-emphasis"
               >
-                Carrinho vazio
+                <VIcon icon="mdi-cart-outline" size="48" class="mb-2" />
+                <div>Carrinho vazio</div>
+                <VBtn
+                  v-if="smAndDown"
+                  variant="text"
+                  color="primary"
+                  class="mt-2"
+                  @click="tabMobile = 'produtos'"
+                >
+                  Ir para Lista de Produtos
+                </VBtn>
               </div>
             </VCardText>
 
             <VDivider />
 
-            <VCardText>
+            <VCardText class="pa-3 pa-sm-4">
               <!-- Subtotal e Desconto -->
-              <VRow>
-                <VCol cols="6">
-                  Subtotal:
-                </VCol>
-                <VCol
-                  cols="6"
-                  class="text-right font-weight-bold"
-                >
+              <VRow dense class="align-center mb-1">
+                <VCol cols="6" class="text-body-2">Subtotal:</VCol>
+                <VCol cols="6" class="text-end font-weight-bold">
                   {{ formatCurrency(calculateSubtotal()) }}
                 </VCol>
               </VRow>
 
-              <VRow>
-                <VCol cols="6">
-                  Desconto:
-                </VCol>
-                <VCol
-                  cols="6"
-                  class="text-right"
-                >
+              <VRow dense class="align-center mb-1">
+                <VCol cols="6" class="text-body-2">Desconto (%):</VCol>
+                <VCol cols="6" class="text-end">
                   <VTextField
                     v-model="discountValue"
-                    label="%"
                     variant="outlined"
                     density="compact"
                     type="number"
                     min="0"
                     max="100"
                     hide-details
-                    class="mb-2"
+                    style="max-width: 100px; margin-left: auto;"
                     @change="applyDiscount"
                   />
                 </VCol>
               </VRow>
 
-              <VRow>
+              <VDivider class="my-2" />
+
+              <VRow dense class="align-center mb-1">
                 <VCol cols="6">
                   <span class="text-h6 font-weight-bold">Total:</span>
                 </VCol>
-                <VCol
-                  cols="6"
-                  class="text-right"
-                >
-                  <span class="text-h6 font-weight-bold text-primary">
+                <VCol cols="6" class="text-end">
+                  <span class="text-h5 font-weight-bold text-primary">
                     {{ formatCurrency(calculateTotal()) }}
                   </span>
                 </VCol>
               </VRow>
 
               <!-- Troco -->
-              <VRow v-if="paymentMethod === 'cash' && calculateChange() > 0">
+              <VRow v-if="paymentMethod === 'cash' && calculateChange() > 0" dense class="align-center">
                 <VCol cols="6">
-                  <span class="text-subtitle-1">Troco:</span>
+                  <span class="text-subtitle-2">Troco:</span>
                 </VCol>
-                <VCol
-                  cols="6"
-                  class="text-right"
-                >
+                <VCol cols="6" class="text-end">
                   <span class="text-subtitle-1 text-success font-weight-bold">
                     {{ formatCurrency(calculateChange()) }}
                   </span>
@@ -243,26 +267,26 @@
             <VDivider />
 
             <!-- Formas de Pagamento -->
-            <VCardText>
-              <h3 class="text-subtitle-1 mb-2">
-                Forma de Pagamento:
-              </h3>
+            <VCardText class="pa-3 pa-sm-4">
+              <h4 class="text-subtitle-2 font-weight-bold mb-2">Forma de Pagamento:</h4>
               <VRadioGroup
                 v-model="paymentMethod"
-                row
-                dense
+                :inline="!smAndDown"
+                density="compact"
+                hide-details
               >
                 <VRadio
                   v-for="method in paymentMethods"
                   :key="method.value"
                   :label="method.label"
                   :value="method.value"
+                  class="me-3"
                 />
               </VRadioGroup>
 
               <div
                 v-if="paymentMethod === 'cash'"
-                class="mt-2"
+                class="mt-3"
               >
                 <VTextField
                   v-model="cashAmount"
@@ -272,23 +296,29 @@
                   prefix="R$"
                   type="number"
                   min="0"
+                  hide-details
                 />
               </div>
             </VCardText>
 
-            <VCardActions class="pa-4">
+            <VDivider />
+
+            <VCardActions class="pa-3 pa-sm-4 d-flex flex-column flex-sm-row gap-2">
               <VBtn
                 color="error"
                 variant="outlined"
                 :disabled="cartItems.length === 0"
-                class="mr-2"
+                :block="smAndDown"
                 @click="clearCart"
               >
-                Limpar
+                Limpar Carrinho
               </VBtn>
               <VBtn
                 color="primary"
+                variant="elevated"
+                size="large"
                 :disabled="!canFinalize"
+                :block="smAndDown"
                 @click="finalizeSale"
               >
                 Finalizar Venda
@@ -297,6 +327,23 @@
           </VCard>
         </VCol>
       </VRow>
+
+      <!-- Botão Flutuante de Atalho para Carrinho no Mobile -->
+      <div
+        v-if="smAndDown && tabMobile === 'produtos' && cartItems.length > 0"
+        class="floating-cart-bar"
+      >
+        <VBtn
+          color="primary"
+          block
+          size="large"
+          elevation="6"
+          prepend-icon="mdi-cart"
+          @click="tabMobile = 'carrinho'"
+        >
+          Ver Carrinho ({{ cartItems.length }} itens) — {{ formatCurrency(calculateTotal()) }}
+        </VBtn>
+      </div>
     </VContainer>
 
     <!-- Snackbar para notificações -->
@@ -321,6 +368,10 @@
 import Estoque from '@/server/Estoque'
 import Vendas from '@/server/Vendas'
 import { computed, onMounted, ref } from 'vue'
+import { useDisplay } from 'vuetify'
+
+const { smAndDown } = useDisplay()
+const tabMobile = ref('produtos')
 
 // Estado reativo
 const searchQuery = ref('')
@@ -545,9 +596,23 @@ onMounted(() => {
 })
 </script>
 
-<style>
+<style scoped>
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.floating-cart-bar {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 99;
+}
+
 .v-list-item {
-  border: 1px solid #eee;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 8px;
   margin-block-end: 8px;
 }

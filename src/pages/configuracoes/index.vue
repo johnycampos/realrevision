@@ -332,7 +332,8 @@ onMounted(() => {
 
     <!-- Tabela de Usuários -->
     <VCard :loading="isLoading">
-      <VTable class="text-no-wrap">
+      <div class="table-responsive">
+        <VTable class="text-no-wrap">
         <thead>
           <tr>
             <th class="text-uppercase">Usuário</th>
@@ -432,6 +433,7 @@ onMounted(() => {
           </tr>
         </tbody>
       </VTable>
+      </div>
     </VCard>
 
     <!-- Dialog de Cadastro / Edição -->
@@ -562,7 +564,8 @@ onMounted(() => {
                   Defina os intervalos permitidos para login de funcionários. Sem horário ativo cadastrado, o login será bloqueado (fail-closed).
                 </p>
 
-                <VTable density="compact" class="border rounded">
+                <div class="table-responsive">
+                  <VTable density="compact" class="border rounded">
                   <thead>
                     <tr>
                       <th>Dia da Semana</th>
@@ -606,6 +609,7 @@ onMounted(() => {
                     </tr>
                   </tbody>
                 </VTable>
+                </div>
               </div>
             </VWindowItem>
           </VWindow>
@@ -636,3 +640,11 @@ onMounted(() => {
     </VSnackbar>
   </div>
 </template>
+
+<style scoped>
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+</style>

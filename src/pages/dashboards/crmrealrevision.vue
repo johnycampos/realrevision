@@ -226,11 +226,12 @@ onMounted(async () => {
           </span>
         </div>
 
-        <div class="d-flex align-center gap-3">
+        <div class="d-flex flex-wrap align-center gap-3 w-100 w-sm-auto">
           <!-- Filtro de Loja para super_admin -->
           <div
             v-if="isSuperAdmin"
-            style="min-width: 260px;"
+            class="flex-grow-1 flex-sm-grow-0"
+            style="min-width: 200px;"
           >
             <VSelect
               v-model="lojaSelecionada"
@@ -583,7 +584,8 @@ onMounted(async () => {
           Detalhamento Comparativo de Desempenho (30 Dias)
         </VCardTitle>
       </VCardItem>
-      <VTable class="text-no-wrap">
+      <div class="table-responsive">
+        <VTable class="text-no-wrap">
         <thead>
           <tr>
             <th>LOJA</th>
@@ -640,6 +642,7 @@ onMounted(async () => {
           </tr>
         </tbody>
       </VTable>
+      </div>
     </VCard>
 
     <!-- LINHA 5: Card de Alerta de Peças com Estoque Baixo -->
@@ -683,10 +686,11 @@ onMounted(async () => {
 
       <VDivider />
 
-      <VTable
+      <div
         v-if="itensEstoqueBaixo.length > 0"
-        class="text-no-wrap"
+        class="table-responsive"
       >
+        <VTable class="text-no-wrap">
         <thead>
           <tr>
             <th>ITEM / CÓDIGO</th>
@@ -773,6 +777,7 @@ onMounted(async () => {
           </tr>
         </tbody>
       </VTable>
+      </div>
 
       <VCardText
         v-else
@@ -794,3 +799,11 @@ onMounted(async () => {
     </VCard>
   </div>
 </template>
+
+<style scoped>
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+</style>

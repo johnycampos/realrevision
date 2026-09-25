@@ -380,10 +380,11 @@ onMounted(async () => {
 
       <VDivider />
 
-      <VTable
+      <div
         v-if="vendas.length > 0"
-        class="text-no-wrap"
+        class="table-responsive"
       >
+        <VTable class="text-no-wrap">
         <thead>
           <tr>
             <th>ID</th>
@@ -450,6 +451,7 @@ onMounted(async () => {
           </tr>
         </tbody>
       </VTable>
+      </div>
 
       <VCardText
         v-else-if="!loading"
@@ -536,7 +538,8 @@ onMounted(async () => {
             Itens da Venda:
           </h6>
 
-          <VTable density="compact">
+          <div class="table-responsive">
+            <VTable density="compact">
             <thead>
               <tr>
                 <th>ITEM ID</th>
@@ -569,6 +572,7 @@ onMounted(async () => {
               </tr>
             </tbody>
           </VTable>
+          </div>
         </VCardText>
 
         <VCardActions class="justify-end">
@@ -584,3 +588,11 @@ onMounted(async () => {
     </VDialog>
   </div>
 </template>
+
+<style scoped>
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+</style>

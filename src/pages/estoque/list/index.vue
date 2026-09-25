@@ -174,10 +174,8 @@ watch(searchQuery, () => {
     </VCard>
 
     <VCard>
-      <VCardText class="d-flex flex-wrap gap-4">
-        <VSpacer />
-
-        <div class="d-flex align-center gap-4">
+      <VCardText class="d-flex flex-wrap align-center justify-space-between gap-3">
+        <div class="d-flex align-center gap-2 flex-grow-1" style="max-width: 320px;">
           <!-- 👉 Ordenação -->
           <VSelect
             v-model="ordenacaoSelecionada"
@@ -185,7 +183,7 @@ watch(searchQuery, () => {
             label="Ordenar por"
             density="compact"
             variant="outlined"
-            class="w-25"
+            class="flex-grow-1"
             clearable
           />
 
@@ -196,17 +194,22 @@ watch(searchQuery, () => {
             variant="text"
             @click="ordemCrescente = !ordemCrescente"
           />
-
-          <!-- 👉 Add item button -->
-          <VBtn @click="abrirCriarItem">
-            Adicionar Item
-          </VBtn>
         </div>
+
+        <!-- 👉 Add item button -->
+        <VBtn
+          class="w-100 w-sm-auto"
+          prepend-icon="mdi-plus"
+          @click="abrirCriarItem"
+        >
+          Adicionar Item
+        </VBtn>
       </VCardText>
 
       <VDivider />
 
-      <VTable class="text-no-wrap">
+      <div class="table-responsive">
+        <VTable class="text-no-wrap">
         <!-- 👉 table head -->
         <thead>
           <tr>
@@ -367,6 +370,7 @@ watch(searchQuery, () => {
           </tr>
         </tfoot>
       </VTable>
+      </div>
 
       <VDivider />
 
@@ -478,7 +482,13 @@ watch(searchQuery, () => {
 }
 </style>
 
-<style lang="scss" scope>
+<style lang="scss">
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .user-pagination-select {
   .v-field__input,
   .v-field__append-inner {
