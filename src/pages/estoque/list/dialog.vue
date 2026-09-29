@@ -668,7 +668,8 @@ watch(
       carregarFornecedoresItem()
       carregarTodosFornecedoresCatalogo()
     }
-  }
+  },
+  { immediate: true }
 )
 
 // Estado do snackbar
