@@ -8,6 +8,32 @@
         Detalhes do Produto
       </h2>
     </div>
+
+    <!-- Alerta Informativo de Empréstimo -->
+    <VAlert
+      v-if="infoEmprestimo"
+      type="info"
+      variant="tonal"
+      density="compact"
+      class="mb-4"
+    >
+      <div>
+        <strong>Item Recebido por Empréstimo</strong> da loja
+        <strong>{{ infoEmprestimo.loja_origem_nome }}</strong>.
+        <br>
+        <span class="text-caption">
+          Quantidade emprestada: <strong>{{ infoEmprestimo.quantidade }}</strong> |
+          Situação financeira:
+          <VChip
+            size="x-small"
+            :color="infoEmprestimo.pago ? 'success' : 'warning'"
+            class="ms-1"
+          >
+            {{ infoEmprestimo.pago ? `Pago (${infoEmprestimo.forma_pagamento || 'OK'})` : 'Pendente de Pagamento' }}
+          </VChip>
+        </span>
+      </div>
+    </VAlert>
     <div class="info-grid">
       <div class="info-card">
         <h3 class="section-title">
@@ -422,7 +448,8 @@
 
 <script setup>
 import estoque from '@/server/Estoque'
-import { computed, ref } from 'vue'
+import emprestimosApi from '@/server/Emprestimos'
+import { computed, ref, watch } from 'vue'
 import DialogCadastroFabricante from './DialogCadastroFabricante.vue'
 import DialogCadastroGrupo from './DialogCadastroGrupo.vue'
 import DialogCadastroLocalEstoque from './DialogCadastroLocalEstoque.vue'
@@ -467,6 +494,38 @@ const emit = defineEmits(['update:item', 'close'])
 
 // Cria uma cópia editável do item
 const itemEditado = ref({ ...props.item })
+const infoEmprestimo = ref(null)
+
+const verificarEmprestimo = async () => {
+  if (props.item && props.item.id) {
+    try {
+      const res = await emprestimosApi.buscarPorItemDestino(props.item.id)
+      infoEmprestimo.value = res.data || null
+    } catch (e) {
+      infoEmprestimo.value = null
+    }
+  } else {
+    infoEmprestimo.value = null
+  }
+}
+
+watch(
+  () => props.item,
+  () => {
+    itemEditado.value = { ...props.item }
+    verificarEmprestimo()
+  },
+  { deep: true, immediate: true }
+)
+
+watch(
+  () => props.isOpen,
+  open => {
+    if (open) {
+      verificarEmprestimo()
+    }
+  }
+)
 
 // Estado do snackbar
 const snackbar = ref(false)

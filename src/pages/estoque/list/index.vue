@@ -2,6 +2,7 @@
 import { VAvatar, VBtn, VCard, VCardText, VChip, VCol, VDialog, VDivider, VPagination, VRow, VSelect, VSpacer, VTextField } from 'vuetify/components'
 
 import estoque from '@/server/Estoque'
+import emprestimosApi from '@/server/Emprestimos'
 import Dialog from './dialog.vue'
 import DialogCriar from './dialogCriar.vue'
 
@@ -11,6 +12,7 @@ const currentPage = ref(1)
 const totalPage = ref(1)
 const totalItens = ref(0)
 const itens = ref([])
+const itensEmprestadosMap = ref({})
 const itemSelecionado = ref(null)
 const dialogDetalhes = ref(false)
 const dialogCriar = ref(false)
@@ -63,6 +65,19 @@ const fetchItens = async () => {
     itens.value = response.data
     totalItens.value = response.data.length
     totalPage.value = Math.ceil(totalItens.value / rowPerPage.value)
+
+    try {
+      const empRes = await emprestimosApi.listarItensEmprestados()
+      const map = {}
+      if (Array.isArray(empRes.data)) {
+        empRes.data.forEach(emp => {
+          map[emp.item_destino_id] = emp
+        })
+      }
+      itensEmprestadosMap.value = map
+    } catch (e) {
+      console.warn('Não foi possível carregar status de itens emprestados:', e)
+    }
   } catch (error) {
     console.error('Erro ao carregar itens:', error)
   } finally {
@@ -260,9 +275,19 @@ watch(searchQuery, () => {
             <!-- 👉 Nome -->
             <td>
               <div class="d-flex flex-column">
-                <h6 class="text-sm font-weight-medium">
-                  {{ item.nome }}
-                </h6>
+                <div class="d-flex align-center gap-2 flex-wrap">
+                  <h6 class="text-sm font-weight-medium">
+                    {{ item.nome }}
+                  </h6>
+                  <VChip
+                    v-if="itensEmprestadosMap[item.id]"
+                    size="x-small"
+                    :color="itensEmprestadosMap[item.id].pago ? 'info' : 'warning'"
+                    variant="tonal"
+                  >
+                    Emprestado de {{ itensEmprestadosMap[item.id].loja_origem_nome }} ({{ itensEmprestadosMap[item.id].quantidade_emprestada }} un • {{ itensEmprestadosMap[item.id].pago ? 'Pago' : 'Não Pago' }})
+                  </VChip>
+                </div>
                 <span class="text-xs text-medium-emphasis">{{ item.nome_curto }}</span>
               </div>
             </td>
