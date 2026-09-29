@@ -674,6 +674,8 @@ const finalizeSale = async () => {
       parcelas: null, // TODO: Implementar quando houver parcelamento de cartão
       observacoes: 'Venda realizada no PDV',
       valor_total: total,
+      desconto_percentual: discountPercentage,
+      desconto_valor: 0,
       itens: cartItems.value.map(item => ({
         item_id: item.id,
         quantidade: item.quantity,
