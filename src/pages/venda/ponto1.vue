@@ -314,6 +314,17 @@
                 Limpar Carrinho
               </VBtn>
               <VBtn
+                color="secondary"
+                variant="tonal"
+                prepend-icon="mdi-printer"
+                :disabled="!ultimaVendaFinalizada"
+                :block="smAndDown"
+                title="Reimprimir cupom da última venda"
+                @click="reimprimirUltimoCupom"
+              >
+                Imprimir Cupom
+              </VBtn>
+              <VBtn
                 color="primary"
                 variant="elevated"
                 size="large"
@@ -367,11 +378,15 @@
 <script setup>
 import Estoque from '@/server/Estoque'
 import Vendas from '@/server/Vendas'
+import { imprimirRecibo } from '@/utils/imprimirRecibo'
 import { computed, onMounted, ref } from 'vue'
 import { useDisplay } from 'vuetify'
 
 const { smAndDown } = useDisplay()
 const tabMobile = ref('produtos')
+
+// Estado para cupom
+const ultimaVendaFinalizada = ref(null)
 
 // Estado reativo
 const searchQuery = ref('')
@@ -538,31 +553,86 @@ const applyDiscount = () => {
   discountValue.value = Math.min(Math.max(0, discount), 100)
 }
 
+const reimprimirUltimoCupom = () => {
+  if (ultimaVendaFinalizada.value) {
+    imprimirRecibo(ultimaVendaFinalizada.value)
+  }
+}
+
 const finalizeSale = async () => {
   try {
+    const userData = (() => {
+      try {
+        return JSON.parse(localStorage.getItem('userData') || '{}')
+      } catch (e) {
+        return {}
+      }
+    })()
+
+    const subtotal = calculateSubtotal()
+    const discountPercentage = parseFloat(discountValue.value) || 0
+    const discountAmount = (subtotal * discountPercentage) / 100
+    const total = calculateTotal()
+    const selectedMethod = paymentMethods.find(m => m.value === paymentMethod.value)
+    const formaPagamentoLabel = selectedMethod ? selectedMethod.label : 'Não informada'
+    const valorRecebidoNum = paymentMethod.value === 'cash' ? parseFloat(cashAmount.value || 0) : null
+    const trocoNum = paymentMethod.value === 'cash' ? calculateChange() : null
+
+    // Snapshot dos itens do carrinho para o recibo antes da limpeza
+    const itensRecibo = cartItems.value.map(item => ({
+      codigo: item.codigo,
+      nome: item.nome,
+      quantidade: item.quantity,
+      precoUnitario: item.price,
+      totalItem: item.price * item.quantity,
+    }))
+
     // Prepara os dados da venda
     const dadosVenda = {
-      loja_id: 1, // TODO: Pegar da configuração do sistema
-      vendedor_id: 1, // TODO: Pegar do usuário logado
-      forma_pagamento: paymentMethods.find(m => m.value === paymentMethod.value).label,
-      parcelas: null, // TODO: Implementar quando houver cartão de crédito
-      observacoes: 'Venda realizada na loja principal',
-      valor_total: calculateTotal(),
+      loja_id: userData.loja_id || 1,
+      vendedor_id: userData.id || 1,
+      forma_pagamento: formaPagamentoLabel,
+      parcelas: null, // TODO: Implementar quando houver parcelamento de cartão
+      observacoes: 'Venda realizada no PDV',
+      valor_total: total,
       itens: cartItems.value.map(item => ({
         item_id: item.id,
         quantidade: item.quantity,
-        preco_unitario: item.price
-      }))
+        preco_unitario: item.price,
+      })),
     }
 
     // Cria a venda
-    await Vendas.criarVenda(dadosVenda)
+    const response = await Vendas.criarVenda(dadosVenda)
+    const vendaCriada = response?.data || response
+
+    const dadosRecibo = {
+      lojaNome: userData.loja_nome || 'Real Revision',
+      vendaId: vendaCriada?.id || '',
+      dataVenda: vendaCriada?.data_venda || new Date().toISOString(),
+      vendedorNome: userData.username || userData.fullName || 'Atendente',
+      itens: itensRecibo,
+      subtotal,
+      descontoPercentual: discountPercentage,
+      descontoValor: discountAmount,
+      totalGeral: total,
+      formaPagamento: formaPagamentoLabel,
+      parcelas: null,
+      valorRecebido: valorRecebidoNum,
+      troco: trocoNum,
+    }
+
+    // Armazena para permitir reimpressão manual
+    ultimaVendaFinalizada.value = dadosRecibo
 
     showSnackbar('Venda finalizada com sucesso!', 'success')
     clearCart()
     paymentMethod.value = null
     cashAmount.value = ''
     
+    // Imprime o cupom automaticamente
+    imprimirRecibo(dadosRecibo)
+
     // Recarrega os produtos para atualizar o estoque
     await loadProducts()
   } catch (error) {
