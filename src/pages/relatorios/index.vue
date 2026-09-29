@@ -66,6 +66,7 @@ const filtroApenasAbaixoMinimo = ref(false)
 const itensEstoqueFiltrados = computed(() => {
   if (!dadosEstoque.value.itens) return []
   if (!filtroApenasAbaixoMinimo.value) return dadosEstoque.value.itens
+  
   return dadosEstoque.value.itens.filter(i => i.abaixo_do_minimo)
 })
 
@@ -81,6 +82,7 @@ const formatarData = dataStr => {
   if (!dataStr) return '-'
   try {
     const data = new Date(dataStr)
+    
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -97,6 +99,7 @@ const formatarDataSimples = dataStr => {
   if (!dataStr) return ''
   const partes = dataStr.split('-')
   if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`
+  
   return dataStr
 }
 
@@ -182,6 +185,7 @@ const getNomeLojaAtual = () => {
     return 'Consolidado - 3 Lojas'
   }
   const l = lojas.value.find(item => item.id === filtroLoja.value)
+  
   return l ? l.nome : `Loja #${filtroLoja.value}`
 }
 
@@ -196,6 +200,7 @@ const getTextoPeriodo = () => {
   if (filtroDataFim.value) {
     return `Até ${formatarDataSimples(filtroDataFim.value)}`
   }
+  
   return 'Todo o histórico'
 }
 
@@ -205,7 +210,36 @@ const getSufixoDataHoje = () => {
   const yyyy = hoje.getFullYear()
   const mm = String(hoje.getMonth() + 1).padStart(2, '0')
   const dd = String(hoje.getDate()).padStart(2, '0')
+  
   return `${yyyy}${mm}${dd}`
+}
+
+// Helper para rodapé de paginação no PDF
+const desenharRodapePaginacao = doc => {
+  doc.setFontSize(8)
+  doc.setTextColor(120)
+  doc.text(
+    `Página ${doc.internal.getNumberOfPages()}`,
+    283,
+    205,
+    { align: 'right' },
+  )
+}
+
+// Helper para montar linhas da tabela de estoque
+const montarLinhasEstoque = lista => {
+  return lista.map((i, idx) => [
+    idx + 1,
+    i.codigo || '-',
+    i.nome || '-',
+    i.loja_nome || '-',
+    i.grupo_nome || '-',
+    `${Number(i.quantidade_disponivel || 0)} ${i.unidade_nome || 'un'}`,
+    `${Number(i.quantidade_minima || 0)}`,
+    formatarMoeda(i.custo_compra),
+    formatarMoeda(i.valor_custo_total),
+    i.abaixo_do_minimo ? 'ABAIXO DO MÍNIMO' : 'OK',
+  ])
 }
 
 // Exportar PDF de Vendas
@@ -271,17 +305,7 @@ const exportarPdfVendas = () => {
         5: { cellWidth: 'auto' },
         6: { cellWidth: 30, halign: 'right', fontStyle: 'bold' },
       },
-      didDrawPage: data => {
-        // Rodapé de paginação
-        doc.setFontSize(8)
-        doc.setTextColor(120)
-        doc.text(
-          `Página ${doc.internal.getNumberOfPages()}`,
-          283,
-          205,
-          { align: 'right' },
-        )
-      },
+      didDrawPage: () => desenharRodapePaginacao(doc),
     })
 
     // Totais no final
@@ -307,7 +331,7 @@ const exportarPdfVendas = () => {
     doc.save(`relatorio-vendas-${getSufixoDataHoje()}.pdf`)
   } catch (err) {
     console.error('Erro ao gerar PDF de vendas:', err)
-    alert('Erro ao gerar arquivo PDF de vendas: ' + err.message)
+    erro.value = `Erro ao gerar arquivo PDF de vendas: ${err.message}`
   }
 }
 
@@ -333,21 +357,7 @@ const exportarPdfEstoque = () => {
     doc.text(`Emissão: ${agora}`, 283, 18, { align: 'right' })
 
     const lista = itensEstoqueFiltrados.value || []
-
-    const rows = lista.map((i, idx) => {
-      return [
-        idx + 1,
-        i.codigo || '-',
-        i.nome || '-',
-        i.loja_nome || '-',
-        i.grupo_nome || '-',
-        `${Number(i.quantidade_disponivel || 0)} ${i.unidade_nome || 'un'}`,
-        `${Number(i.quantidade_minima || 0)}`,
-        formatarMoeda(i.custo_compra),
-        formatarMoeda(i.valor_custo_total),
-        i.abaixo_do_minimo ? 'ABAIXO DO MÍNIMO' : 'OK',
-      ]
-    })
+    const rows = montarLinhasEstoque(lista)
 
     autoTable(doc, {
       startY: 28,
@@ -383,16 +393,7 @@ const exportarPdfEstoque = () => {
           data.cell.styles.fontStyle = 'bold'
         }
       },
-      didDrawPage: data => {
-        doc.setFontSize(8)
-        doc.setTextColor(120)
-        doc.text(
-          `Página ${doc.internal.getNumberOfPages()}`,
-          283,
-          205,
-          { align: 'right' },
-        )
-      },
+      didDrawPage: () => desenharRodapePaginacao(doc),
     })
 
     const finalY = doc.lastAutoTable.finalY + 8
@@ -417,7 +418,7 @@ const exportarPdfEstoque = () => {
     doc.save(`relatorio-estoque-${getSufixoDataHoje()}.pdf`)
   } catch (err) {
     console.error('Erro ao gerar PDF de estoque:', err)
-    alert('Erro ao gerar arquivo PDF de estoque: ' + err.message)
+    erro.value = `Erro ao gerar arquivo PDF de estoque: ${err.message}`
   }
 }
 
@@ -440,7 +441,10 @@ onMounted(() => {
   <div class="relatorios-container">
     <!-- Título e Ações Superiores -->
     <VRow class="mb-4 align-center">
-      <VCol cols="12" md="6">
+      <VCol
+        cols="12"
+        md="6"
+      >
         <h2 class="text-h4 font-weight-bold">
           Relatórios Gerenciais
         </h2>
@@ -448,7 +452,11 @@ onMounted(() => {
           Análise de desempenho de vendas, estoque e exportação documental em PDF
         </p>
       </VCol>
-      <VCol cols="12" md="6" class="text-md-right">
+      <VCol
+        cols="12"
+        md="6"
+        class="text-md-right"
+      >
         <VBtn
           v-if="tabAtiva === 'vendas'"
           color="error"
@@ -477,14 +485,22 @@ onMounted(() => {
     <!-- Card de Filtros -->
     <VCard class="mb-6 elevation-1">
       <VCardTitle class="py-3 px-4 d-flex align-center">
-        <VIcon icon="mdi-filter-variant" class="me-2 text-primary" />
+        <VIcon
+          icon="mdi-filter-variant"
+          class="me-2 text-primary"
+        />
         <span class="text-subtitle-1 font-weight-bold">Filtros de Pesquisa</span>
       </VCardTitle>
       <VDivider />
       <VCardText class="pt-4 pb-2">
         <VRow dense>
           <!-- Filtro de Loja (Apenas Super Admin) -->
-          <VCol v-if="isSuperAdmin" cols="12" sm="6" md="4">
+          <VCol
+            v-if="isSuperAdmin"
+            cols="12"
+            sm="6"
+            md="4"
+          >
             <VSelect
               v-model="filtroLoja"
               :items="[
@@ -501,7 +517,12 @@ onMounted(() => {
           </VCol>
 
           <!-- Filtro Data Início -->
-          <VCol cols="12" sm="6" md="3" v-if="tabAtiva === 'vendas'">
+          <VCol
+            v-if="tabAtiva === 'vendas'"
+            cols="12"
+            sm="6"
+            md="3"
+          >
             <VTextField
               v-model="filtroDataInicio"
               type="date"
@@ -513,7 +534,12 @@ onMounted(() => {
           </VCol>
 
           <!-- Filtro Data Fim -->
-          <VCol cols="12" sm="6" md="3" v-if="tabAtiva === 'vendas'">
+          <VCol
+            v-if="tabAtiva === 'vendas'"
+            cols="12"
+            sm="6"
+            md="3"
+          >
             <VTextField
               v-model="filtroDataFim"
               type="date"
@@ -525,7 +551,13 @@ onMounted(() => {
           </VCol>
 
           <!-- Filtro rápido de estoque -->
-          <VCol cols="12" sm="6" md="4" v-if="tabAtiva === 'estoque'" class="d-flex align-center">
+          <VCol
+            v-if="tabAtiva === 'estoque'"
+            cols="12"
+            sm="6"
+            md="4"
+            class="d-flex align-center"
+          >
             <VSwitch
               v-model="filtroApenasAbaixoMinimo"
               label="Apenas peças abaixo do estoque mínimo"
@@ -536,7 +568,12 @@ onMounted(() => {
           </VCol>
 
           <!-- Botões de Ação -->
-          <VCol cols="12" sm="6" :md="tabAtiva === 'vendas' ? 2 : 4" class="d-flex align-center justify-end">
+          <VCol
+            cols="12"
+            sm="6"
+            :md="tabAtiva === 'vendas' ? 2 : 4"
+            class="d-flex align-center justify-end"
+          >
             <VBtn
               color="primary"
               variant="elevated"
@@ -580,11 +617,17 @@ onMounted(() => {
         grow
       >
         <VTab value="vendas">
-          <VIcon icon="mdi-chart-bar" class="me-2" />
+          <VIcon
+            icon="mdi-chart-bar"
+            class="me-2"
+          />
           Relatório de Vendas
         </VTab>
         <VTab value="estoque">
-          <VIcon icon="mdi-package-variant-closed" class="me-2" />
+          <VIcon
+            icon="mdi-package-variant-closed"
+            class="me-2"
+          />
           Relatório de Estoque
         </VTab>
       </VTabs>
@@ -596,9 +639,19 @@ onMounted(() => {
           <VCardText class="pa-4">
             <!-- Cards de Resumo de Vendas -->
             <VRow class="mb-4">
-              <VCol cols="12" sm="6" md="3">
-                <VCard variant="tonal" color="primary" class="pa-4 text-center">
-                  <div class="text-caption text-uppercase font-weight-medium">Vendas Realizadas</div>
+              <VCol
+                cols="12"
+                sm="6"
+                md="3"
+              >
+                <VCard
+                  variant="tonal"
+                  color="primary"
+                  class="pa-4 text-center"
+                >
+                  <div class="text-caption text-uppercase font-weight-medium">
+                    Vendas Realizadas
+                  </div>
                   <div class="text-h4 font-weight-bold my-1">
                     {{ dadosVendas.totais.quantidade_vendas }}
                   </div>
@@ -608,9 +661,19 @@ onMounted(() => {
                 </VCard>
               </VCol>
 
-              <VCol cols="12" sm="6" md="3">
-                <VCard variant="tonal" color="success" class="pa-4 text-center">
-                  <div class="text-caption text-uppercase font-weight-medium">Faturamento Total</div>
+              <VCol
+                cols="12"
+                sm="6"
+                md="3"
+              >
+                <VCard
+                  variant="tonal"
+                  color="success"
+                  class="pa-4 text-center"
+                >
+                  <div class="text-caption text-uppercase font-weight-medium">
+                    Faturamento Total
+                  </div>
                   <div class="text-h4 font-weight-bold my-1 text-success">
                     {{ formatarMoeda(dadosVendas.totais.valor_total) }}
                   </div>
@@ -620,9 +683,19 @@ onMounted(() => {
                 </VCard>
               </VCol>
 
-              <VCol cols="12" sm="6" md="3">
-                <VCard variant="tonal" color="info" class="pa-4 text-center">
-                  <div class="text-caption text-uppercase font-weight-medium">Ticket Médio</div>
+              <VCol
+                cols="12"
+                sm="6"
+                md="3"
+              >
+                <VCard
+                  variant="tonal"
+                  color="info"
+                  class="pa-4 text-center"
+                >
+                  <div class="text-caption text-uppercase font-weight-medium">
+                    Ticket Médio
+                  </div>
                   <div class="text-h4 font-weight-bold my-1 text-info">
                     {{ formatarMoeda(dadosVendas.totais.ticket_medio) }}
                   </div>
@@ -632,9 +705,19 @@ onMounted(() => {
                 </VCard>
               </VCol>
 
-              <VCol cols="12" sm="6" md="3">
-                <VCard variant="tonal" color="warning" class="pa-4 text-center">
-                  <div class="text-caption text-uppercase font-weight-medium">Peças Vendidas</div>
+              <VCol
+                cols="12"
+                sm="6"
+                md="3"
+              >
+                <VCard
+                  variant="tonal"
+                  color="warning"
+                  class="pa-4 text-center"
+                >
+                  <div class="text-caption text-uppercase font-weight-medium">
+                    Peças Vendidas
+                  </div>
                   <div class="text-h4 font-weight-bold my-1 text-warning">
                     {{ dadosVendas.totais.itens_vendidos_total }} un
                   </div>
@@ -646,29 +729,62 @@ onMounted(() => {
             </VRow>
 
             <!-- Breakdown por Loja (Se Super Admin e sem filtro específico de loja) -->
-            <div v-if="isSuperAdmin && !filtroLoja && dadosVendas.por_loja && dadosVendas.por_loja.length > 0" class="mb-6">
+            <div
+              v-if="isSuperAdmin && !filtroLoja && dadosVendas.por_loja && dadosVendas.por_loja.length > 0"
+              class="mb-6"
+            >
               <h3 class="text-subtitle-1 font-weight-bold mb-2 d-flex align-center">
-                <VIcon icon="mdi-store" class="me-2 text-primary" size="20" />
+                <VIcon
+                  icon="mdi-store"
+                  class="me-2 text-primary"
+                  size="20"
+                />
                 Desempenho por Loja (Consolidado)
               </h3>
               <div class="table-responsive">
-                <VTable density="compact" class="border rounded">
+                <VTable
+                  density="compact"
+                  class="border rounded"
+                >
                   <thead>
                     <tr class="bg-surface-variant">
-                      <th class="font-weight-bold">Loja</th>
-                      <th class="font-weight-bold text-center">Vendas</th>
-                      <th class="font-weight-bold text-center">Peças</th>
-                      <th class="font-weight-bold text-end">Ticket Médio</th>
-                      <th class="font-weight-bold text-end">Faturamento Total</th>
+                      <th class="font-weight-bold">
+                        Loja
+                      </th>
+                      <th class="font-weight-bold text-center">
+                        Vendas
+                      </th>
+                      <th class="font-weight-bold text-center">
+                        Peças
+                      </th>
+                      <th class="font-weight-bold text-end">
+                        Ticket Médio
+                      </th>
+                      <th class="font-weight-bold text-end">
+                        Faturamento Total
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="l in dadosVendas.por_loja" :key="l.loja_id">
-                      <td class="font-weight-medium">{{ l.loja_nome }}</td>
-                      <td class="text-center">{{ l.quantidade_vendas }}</td>
-                      <td class="text-center">{{ l.itens_vendidos }} un</td>
-                      <td class="text-end">{{ formatarMoeda(l.ticket_medio) }}</td>
-                      <td class="text-end font-weight-bold text-success">{{ formatarMoeda(l.valor_total) }}</td>
+                    <tr
+                      v-for="l in dadosVendas.por_loja"
+                      :key="l.loja_id"
+                    >
+                      <td class="font-weight-medium">
+                        {{ l.loja_nome }}
+                      </td>
+                      <td class="text-center">
+                        {{ l.quantidade_vendas }}
+                      </td>
+                      <td class="text-center">
+                        {{ l.itens_vendidos }} un
+                      </td>
+                      <td class="text-end">
+                        {{ formatarMoeda(l.ticket_medio) }}
+                      </td>
+                      <td class="text-end font-weight-bold text-success">
+                        {{ formatarMoeda(l.valor_total) }}
+                      </td>
                     </tr>
                   </tbody>
                 </VTable>
@@ -685,42 +801,98 @@ onMounted(() => {
               </span>
             </div>
 
-            <div v-if="loadingVendas" class="py-12 text-center">
-              <VProgressCircular indeterminate color="primary" size="48" />
-              <div class="mt-3 text-body-2 text-medium-emphasis">Carregando relatório de vendas...</div>
+            <div
+              v-if="loadingVendas"
+              class="py-12 text-center"
+            >
+              <VProgressCircular
+                indeterminate
+                color="primary"
+                size="48"
+              />
+              <div class="mt-3 text-body-2 text-medium-emphasis">
+                Carregando relatório de vendas...
+              </div>
             </div>
 
-            <div v-else-if="dadosVendas.vendas.length === 0" class="py-10 text-center border rounded">
-              <VIcon icon="mdi-cart-off" size="48" class="text-medium-emphasis mb-2" />
-              <div class="text-body-1 font-weight-medium">Nenhuma venda encontrada para os filtros selecionados.</div>
+            <div
+              v-else-if="dadosVendas.vendas.length === 0"
+              class="py-10 text-center border rounded"
+            >
+              <VIcon
+                icon="mdi-cart-off"
+                size="48"
+                class="text-medium-emphasis mb-2"
+              />
+              <div class="text-body-1 font-weight-medium">
+                Nenhuma venda encontrada para os filtros selecionados.
+              </div>
             </div>
 
-            <div v-else class="table-responsive">
-              <VTable density="comfortable" hover class="border rounded">
+            <div
+              v-else
+              class="table-responsive"
+            >
+              <VTable
+                density="comfortable"
+                hover
+                class="border rounded"
+              >
                 <thead>
                   <tr class="bg-surface-variant">
-                    <th class="font-weight-bold"># ID</th>
-                    <th class="font-weight-bold">Data / Hora</th>
-                    <th v-if="isSuperAdmin" class="font-weight-bold">Loja</th>
-                    <th class="font-weight-bold">Vendedor</th>
-                    <th class="font-weight-bold">Pagamento</th>
-                    <th class="font-weight-bold text-center">Qtd Itens</th>
-                    <th class="font-weight-bold text-end">Valor Total</th>
-                    <th class="font-weight-bold text-center">Ações</th>
+                    <th class="font-weight-bold">
+                      # ID
+                    </th>
+                    <th class="font-weight-bold">
+                      Data / Hora
+                    </th>
+                    <th
+                      v-if="isSuperAdmin"
+                      class="font-weight-bold"
+                    >
+                      Loja
+                    </th>
+                    <th class="font-weight-bold">
+                      Vendedor
+                    </th>
+                    <th class="font-weight-bold">
+                      Pagamento
+                    </th>
+                    <th class="font-weight-bold text-center">
+                      Qtd Itens
+                    </th>
+                    <th class="font-weight-bold text-end">
+                      Valor Total
+                    </th>
+                    <th class="font-weight-bold text-center">
+                      Ações
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="v in dadosVendas.vendas" :key="v.id">
-                    <td class="text-caption font-weight-bold">#{{ v.id }}</td>
+                  <tr
+                    v-for="v in dadosVendas.vendas"
+                    :key="v.id"
+                  >
+                    <td class="text-caption font-weight-bold">
+                      #{{ v.id }}
+                    </td>
                     <td>{{ formatarData(v.data_venda) }}</td>
                     <td v-if="isSuperAdmin">
-                      <VChip size="small" variant="tonal" color="primary">
+                      <VChip
+                        size="small"
+                        variant="tonal"
+                        color="primary"
+                      >
                         {{ v.loja_nome }}
                       </VChip>
                     </td>
                     <td>{{ v.vendedor_nome || '-' }}</td>
                     <td>
-                      <VChip size="small" variant="outlined">
+                      <VChip
+                        size="small"
+                        variant="outlined"
+                      >
                         {{ v.forma_pagamento }}
                         {{ v.parcelas > 1 ? `(${v.parcelas}x)` : '' }}
                       </VChip>
@@ -753,9 +925,19 @@ onMounted(() => {
           <VCardText class="pa-4">
             <!-- Cards de Resumo do Estoque -->
             <VRow class="mb-4">
-              <VCol cols="12" sm="6" md="3">
-                <VCard variant="tonal" color="primary" class="pa-4 text-center">
-                  <div class="text-caption text-uppercase font-weight-medium">Itens Cadastrados</div>
+              <VCol
+                cols="12"
+                sm="6"
+                md="3"
+              >
+                <VCard
+                  variant="tonal"
+                  color="primary"
+                  class="pa-4 text-center"
+                >
+                  <div class="text-caption text-uppercase font-weight-medium">
+                    Itens Cadastrados
+                  </div>
                   <div class="text-h4 font-weight-bold my-1">
                     {{ dadosEstoque.totais.total_itens }}
                   </div>
@@ -765,9 +947,19 @@ onMounted(() => {
                 </VCard>
               </VCol>
 
-              <VCol cols="12" sm="6" md="3">
-                <VCard variant="tonal" color="info" class="pa-4 text-center">
-                  <div class="text-caption text-uppercase font-weight-medium">Unidades Físicas</div>
+              <VCol
+                cols="12"
+                sm="6"
+                md="3"
+              >
+                <VCard
+                  variant="tonal"
+                  color="info"
+                  class="pa-4 text-center"
+                >
+                  <div class="text-caption text-uppercase font-weight-medium">
+                    Unidades Físicas
+                  </div>
                   <div class="text-h4 font-weight-bold my-1 text-info">
                     {{ dadosEstoque.totais.total_unidades }} un
                   </div>
@@ -777,9 +969,19 @@ onMounted(() => {
                 </VCard>
               </VCol>
 
-              <VCol cols="12" sm="6" md="3">
-                <VCard variant="tonal" color="success" class="pa-4 text-center">
-                  <div class="text-caption text-uppercase font-weight-medium">Custo Total em Estoque</div>
+              <VCol
+                cols="12"
+                sm="6"
+                md="3"
+              >
+                <VCard
+                  variant="tonal"
+                  color="success"
+                  class="pa-4 text-center"
+                >
+                  <div class="text-caption text-uppercase font-weight-medium">
+                    Custo Total em Estoque
+                  </div>
                   <div class="text-h4 font-weight-bold my-1 text-success">
                     {{ formatarMoeda(dadosEstoque.totais.valor_custo_total) }}
                   </div>
@@ -789,13 +991,19 @@ onMounted(() => {
                 </VCard>
               </VCol>
 
-              <VCol cols="12" sm="6" md="3">
+              <VCol
+                cols="12"
+                sm="6"
+                md="3"
+              >
                 <VCard
                   variant="tonal"
                   :color="dadosEstoque.totais.total_itens_abaixo_minimo > 0 ? 'error' : 'secondary'"
                   class="pa-4 text-center"
                 >
-                  <div class="text-caption text-uppercase font-weight-medium">Abaixo do Mínimo</div>
+                  <div class="text-caption text-uppercase font-weight-medium">
+                    Abaixo do Mínimo
+                  </div>
                   <div class="text-h4 font-weight-bold my-1 text-error">
                     {{ dadosEstoque.totais.total_itens_abaixo_minimo }}
                   </div>
@@ -807,27 +1015,56 @@ onMounted(() => {
             </VRow>
 
             <!-- Breakdown por Loja (Se Super Admin e sem filtro específico) -->
-            <div v-if="isSuperAdmin && !filtroLoja && dadosEstoque.por_loja && dadosEstoque.por_loja.length > 0" class="mb-6">
+            <div
+              v-if="isSuperAdmin && !filtroLoja && dadosEstoque.por_loja && dadosEstoque.por_loja.length > 0"
+              class="mb-6"
+            >
               <h3 class="text-subtitle-1 font-weight-bold mb-2 d-flex align-center">
-                <VIcon icon="mdi-store" class="me-2 text-primary" size="20" />
+                <VIcon
+                  icon="mdi-store"
+                  class="me-2 text-primary"
+                  size="20"
+                />
                 Posição Consolidada por Loja
               </h3>
               <div class="table-responsive">
-                <VTable density="compact" class="border rounded">
+                <VTable
+                  density="compact"
+                  class="border rounded"
+                >
                   <thead>
                     <tr class="bg-surface-variant">
-                      <th class="font-weight-bold">Loja</th>
-                      <th class="font-weight-bold text-center">Itens</th>
-                      <th class="font-weight-bold text-center">Unidades</th>
-                      <th class="font-weight-bold text-center">Abaixo do Mínimo</th>
-                      <th class="font-weight-bold text-end">Custo Total</th>
+                      <th class="font-weight-bold">
+                        Loja
+                      </th>
+                      <th class="font-weight-bold text-center">
+                        Itens
+                      </th>
+                      <th class="font-weight-bold text-center">
+                        Unidades
+                      </th>
+                      <th class="font-weight-bold text-center">
+                        Abaixo do Mínimo
+                      </th>
+                      <th class="font-weight-bold text-end">
+                        Custo Total
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="l in dadosEstoque.por_loja" :key="l.loja_id">
-                      <td class="font-weight-medium">{{ l.loja_nome }}</td>
-                      <td class="text-center">{{ l.total_itens }}</td>
-                      <td class="text-center">{{ l.total_unidades }} un</td>
+                    <tr
+                      v-for="l in dadosEstoque.por_loja"
+                      :key="l.loja_id"
+                    >
+                      <td class="font-weight-medium">
+                        {{ l.loja_nome }}
+                      </td>
+                      <td class="text-center">
+                        {{ l.total_itens }}
+                      </td>
+                      <td class="text-center">
+                        {{ l.total_unidades }} un
+                      </td>
                       <td class="text-center">
                         <VChip
                           v-if="l.total_itens_abaixo_minimo > 0"
@@ -836,9 +1073,14 @@ onMounted(() => {
                         >
                           {{ l.total_itens_abaixo_minimo }} alerta(s)
                         </VChip>
-                        <span v-else class="text-caption text-medium-emphasis">0</span>
+                        <span
+                          v-else
+                          class="text-caption text-medium-emphasis"
+                        >0</span>
                       </td>
-                      <td class="text-end font-weight-bold text-success">{{ formatarMoeda(l.valor_custo_total) }}</td>
+                      <td class="text-end font-weight-bold text-success">
+                        {{ formatarMoeda(l.valor_custo_total) }}
+                      </td>
                     </tr>
                   </tbody>
                 </VTable>
@@ -855,37 +1097,92 @@ onMounted(() => {
               </span>
             </div>
 
-            <div v-if="loadingEstoque" class="py-12 text-center">
-              <VProgressCircular indeterminate color="primary" size="48" />
-              <div class="mt-3 text-body-2 text-medium-emphasis">Carregando relatório de estoque...</div>
+            <div
+              v-if="loadingEstoque"
+              class="py-12 text-center"
+            >
+              <VProgressCircular
+                indeterminate
+                color="primary"
+                size="48"
+              />
+              <div class="mt-3 text-body-2 text-medium-emphasis">
+                Carregando relatório de estoque...
+              </div>
             </div>
 
-            <div v-else-if="itensEstoqueFiltrados.length === 0" class="py-10 text-center border rounded">
-              <VIcon icon="mdi-package-variant-closed" size="48" class="text-medium-emphasis mb-2" />
-              <div class="text-body-1 font-weight-medium">Nenhum item encontrado no estoque para os critérios selecionados.</div>
+            <div
+              v-else-if="itensEstoqueFiltrados.length === 0"
+              class="py-10 text-center border rounded"
+            >
+              <VIcon
+                icon="mdi-package-variant-closed"
+                size="48"
+                class="text-medium-emphasis mb-2"
+              />
+              <div class="text-body-1 font-weight-medium">
+                Nenhum item encontrado no estoque para os critérios selecionados.
+              </div>
             </div>
 
-            <div v-else class="table-responsive">
-              <VTable density="comfortable" hover class="border rounded">
+            <div
+              v-else
+              class="table-responsive"
+            >
+              <VTable
+                density="comfortable"
+                hover
+                class="border rounded"
+              >
                 <thead>
                   <tr class="bg-surface-variant">
-                    <th class="font-weight-bold">Código</th>
-                    <th class="font-weight-bold">Descrição da Peça</th>
-                    <th v-if="isSuperAdmin" class="font-weight-bold">Loja</th>
-                    <th class="font-weight-bold">Grupo</th>
-                    <th class="font-weight-bold text-end">Qtd Disp.</th>
-                    <th class="font-weight-bold text-end">Mínimo</th>
-                    <th class="font-weight-bold text-end">Custo Unit.</th>
-                    <th class="font-weight-bold text-end">Custo Total</th>
-                    <th class="font-weight-bold text-center">Situação</th>
+                    <th class="font-weight-bold">
+                      Código
+                    </th>
+                    <th class="font-weight-bold">
+                      Descrição da Peça
+                    </th>
+                    <th
+                      v-if="isSuperAdmin"
+                      class="font-weight-bold"
+                    >
+                      Loja
+                    </th>
+                    <th class="font-weight-bold">
+                      Grupo
+                    </th>
+                    <th class="font-weight-bold text-end">
+                      Qtd Disp.
+                    </th>
+                    <th class="font-weight-bold text-end">
+                      Mínimo
+                    </th>
+                    <th class="font-weight-bold text-end">
+                      Custo Unit.
+                    </th>
+                    <th class="font-weight-bold text-end">
+                      Custo Total
+                    </th>
+                    <th class="font-weight-bold text-center">
+                      Situação
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="item in itensEstoqueFiltrados" :key="item.id">
-                    <td class="font-weight-medium text-caption">{{ item.codigo }}</td>
+                  <tr
+                    v-for="item in itensEstoqueFiltrados"
+                    :key="item.id"
+                  >
+                    <td class="font-weight-medium text-caption">
+                      {{ item.codigo }}
+                    </td>
                     <td>{{ item.nome }}</td>
                     <td v-if="isSuperAdmin">
-                      <VChip size="small" variant="tonal" color="primary">
+                      <VChip
+                        size="small"
+                        variant="tonal"
+                        color="primary"
+                      >
                         {{ item.loja_nome }}
                       </VChip>
                     </td>
@@ -896,8 +1193,12 @@ onMounted(() => {
                     <td class="text-end text-medium-emphasis">
                       {{ Number(item.quantidade_minima) }}
                     </td>
-                    <td class="text-end">{{ formatarMoeda(item.custo_compra) }}</td>
-                    <td class="text-end font-weight-bold text-success">{{ formatarMoeda(item.valor_custo_total) }}</td>
+                    <td class="text-end">
+                      {{ formatarMoeda(item.custo_compra) }}
+                    </td>
+                    <td class="text-end font-weight-bold text-success">
+                      {{ formatarMoeda(item.valor_custo_total) }}
+                    </td>
                     <td class="text-center">
                       <VChip
                         v-if="item.abaixo_do_minimo"
@@ -926,7 +1227,10 @@ onMounted(() => {
     </VCard>
 
     <!-- Dialog de Detalhes dos Itens da Venda -->
-    <VDialog v-model="dialogDetalhesVenda" max-width="650px">
+    <VDialog
+      v-model="dialogDetalhesVenda"
+      max-width="650px"
+    >
       <VCard v-if="vendaSelecionada">
         <VCardTitle class="pa-4 d-flex justify-space-between align-center bg-primary text-white">
           <span>Detalhes da Venda #{{ vendaSelecionada.id }}</span>
@@ -940,53 +1244,117 @@ onMounted(() => {
         </VCardTitle>
 
         <VCardText class="pa-4">
-          <VRow dense class="mb-3">
-            <VCol cols="12" sm="6">
-              <div class="text-caption text-medium-emphasis">Data e Hora</div>
-              <div class="text-body-2 font-weight-medium">{{ formatarData(vendaSelecionada.data_venda) }}</div>
+          <VRow
+            dense
+            class="mb-3"
+          >
+            <VCol
+              cols="12"
+              sm="6"
+            >
+              <div class="text-caption text-medium-emphasis">
+                Data e Hora
+              </div>
+              <div class="text-body-2 font-weight-medium">
+                {{ formatarData(vendaSelecionada.data_venda) }}
+              </div>
             </VCol>
-            <VCol cols="12" sm="6">
-              <div class="text-caption text-medium-emphasis">Loja</div>
-              <div class="text-body-2 font-weight-medium">{{ vendaSelecionada.loja_nome }}</div>
+            <VCol
+              cols="12"
+              sm="6"
+            >
+              <div class="text-caption text-medium-emphasis">
+                Loja
+              </div>
+              <div class="text-body-2 font-weight-medium">
+                {{ vendaSelecionada.loja_nome }}
+              </div>
             </VCol>
-            <VCol cols="12" sm="6">
-              <div class="text-caption text-medium-emphasis">Vendedor</div>
-              <div class="text-body-2 font-weight-medium">{{ vendaSelecionada.vendedor_nome || '-' }}</div>
+            <VCol
+              cols="12"
+              sm="6"
+            >
+              <div class="text-caption text-medium-emphasis">
+                Vendedor
+              </div>
+              <div class="text-body-2 font-weight-medium">
+                {{ vendaSelecionada.vendedor_nome || '-' }}
+              </div>
             </VCol>
-            <VCol cols="12" sm="6">
-              <div class="text-caption text-medium-emphasis">Forma de Pagamento</div>
+            <VCol
+              cols="12"
+              sm="6"
+            >
+              <div class="text-caption text-medium-emphasis">
+                Forma de Pagamento
+              </div>
               <div class="text-body-2 font-weight-medium">
                 {{ vendaSelecionada.forma_pagamento }}
                 {{ vendaSelecionada.parcelas > 1 ? `(${vendaSelecionada.parcelas}x)` : '' }}
               </div>
             </VCol>
-            <VCol v-if="vendaSelecionada.observacoes" cols="12">
-              <div class="text-caption text-medium-emphasis">Observações</div>
-              <div class="text-body-2 font-weight-medium">{{ vendaSelecionada.observacoes }}</div>
+            <VCol
+              v-if="vendaSelecionada.observacoes"
+              cols="12"
+            >
+              <div class="text-caption text-medium-emphasis">
+                Observações
+              </div>
+              <div class="text-body-2 font-weight-medium">
+                {{ vendaSelecionada.observacoes }}
+              </div>
             </VCol>
           </VRow>
 
           <VDivider class="my-3" />
 
-          <h4 class="text-subtitle-2 font-weight-bold mb-2">Itens Vendidos</h4>
+          <h4 class="text-subtitle-2 font-weight-bold mb-2">
+            Itens Vendidos
+          </h4>
           <div class="table-responsive">
-            <VTable density="compact" class="border rounded">
+            <VTable
+              density="compact"
+              class="border rounded"
+            >
               <thead>
                 <tr class="bg-surface-variant">
-                  <th class="font-weight-bold">Código</th>
-                  <th class="font-weight-bold">Peça / Item</th>
-                  <th class="font-weight-bold text-center">Qtd</th>
-                  <th class="font-weight-bold text-end">Preço Unit.</th>
-                  <th class="font-weight-bold text-end">Subtotal</th>
+                  <th class="font-weight-bold">
+                    Código
+                  </th>
+                  <th class="font-weight-bold">
+                    Peça / Item
+                  </th>
+                  <th class="font-weight-bold text-center">
+                    Qtd
+                  </th>
+                  <th class="font-weight-bold text-end">
+                    Preço Unit.
+                  </th>
+                  <th class="font-weight-bold text-end">
+                    Subtotal
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="it in (vendaSelecionada.itens || [])" :key="it.id || it.item_id">
-                  <td class="text-caption">{{ it.item_codigo || '-' }}</td>
-                  <td class="font-weight-medium">{{ it.item_nome || `Item #${it.item_id}` }}</td>
-                  <td class="text-center">{{ it.quantidade }}</td>
-                  <td class="text-end">{{ formatarMoeda(it.preco_unitario) }}</td>
-                  <td class="text-end font-weight-bold text-success">{{ formatarMoeda(it.valor_total_item) }}</td>
+                <tr
+                  v-for="it in (vendaSelecionada.itens || [])"
+                  :key="it.id || it.item_id"
+                >
+                  <td class="text-caption">
+                    {{ it.item_codigo || '-' }}
+                  </td>
+                  <td class="font-weight-medium">
+                    {{ it.item_nome || `Item #${it.item_id}` }}
+                  </td>
+                  <td class="text-center">
+                    {{ it.quantidade }}
+                  </td>
+                  <td class="text-end">
+                    {{ formatarMoeda(it.preco_unitario) }}
+                  </td>
+                  <td class="text-end font-weight-bold text-success">
+                    {{ formatarMoeda(it.valor_total_item) }}
+                  </td>
                 </tr>
               </tbody>
             </VTable>
@@ -999,7 +1367,11 @@ onMounted(() => {
         </VCardText>
 
         <VCardActions class="pa-4 justify-end">
-          <VBtn color="primary" variant="tonal" @click="dialogDetalhesVenda = false">
+          <VBtn
+            color="primary"
+            variant="tonal"
+            @click="dialogDetalhesVenda = false"
+          >
             Fechar
           </VBtn>
         </VCardActions>
