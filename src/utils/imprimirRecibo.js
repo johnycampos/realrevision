@@ -295,7 +295,10 @@ const gerarDocumentoHtml = dados => {
 
   <div class="tabela-cabecalho">
     <div class="bold">C&oacute;digo&nbsp;&nbsp;&nbsp;&nbsp;Descri&ccedil;&atilde;o</div>
-    <div>--&gt; QTD&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VLR Unit.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Subtotal</div>
+    <div class="linha-dupla">
+      <span>--&gt; QTD&nbsp;&nbsp;VLR Unit.</span>
+      <span>Subtotal</span>
+    </div>
   </div>
 
   <div class="itens-bloco">
