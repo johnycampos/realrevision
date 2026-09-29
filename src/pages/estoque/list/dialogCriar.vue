@@ -1,6 +1,6 @@
 <script setup>
 import estoque from '@/server/Estoque'
-import { ref } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 
 const props = defineProps({
   isOpen: {
@@ -15,6 +15,33 @@ const emit = defineEmits(['close'])
 const snackbar = ref(false)
 const snackbarText = ref('')
 const snackbarColor = ref('success')
+
+// Fornecedores
+const todosFornecedoresCatalogo = ref([])
+const fornecedoresSelecionados = ref([])
+
+const carregarFornecedoresCatalogo = async () => {
+  try {
+    const res = await estoque.listarFornecedoresCatalogo()
+    todosFornecedoresCatalogo.value = Array.isArray(res.data) ? res.data : []
+  } catch (e) {
+    todosFornecedoresCatalogo.value = []
+  }
+}
+
+watch(
+  () => props.isOpen,
+  open => {
+    if (open) {
+      fornecedoresSelecionados.value = []
+      carregarFornecedoresCatalogo()
+    }
+  }
+)
+
+onMounted(() => {
+  carregarFornecedoresCatalogo()
+})
 
 // Cria um novo item vazio
 const novoItem = ref({
@@ -47,13 +74,25 @@ const formatarPreco = preco => {
 // Função para criar o item
 const criarItem = async () => {
   try {
-    await estoque.criarItem(novoItem.value)
+    const res = await estoque.criarItem(novoItem.value)
+    const itemCriado = res.data
+
+    if (itemCriado && itemCriado.id && fornecedoresSelecionados.value.length > 0) {
+      for (const fornId of fornecedoresSelecionados.value) {
+        try {
+          await estoque.vincularFornecedor(itemCriado.id, fornId)
+        } catch (e) {
+          console.error('Erro ao vincular fornecedor no cadastro:', e)
+        }
+      }
+    }
+
     snackbarText.value = 'Item criado com sucesso!'
     snackbarColor.value = 'success'
     snackbar.value = true
     setTimeout(() => {
       emit('close')
-    }, 2000)
+    }, 1500)
   } catch (error) {
     console.error('Erro ao criar item:', error)
     snackbarText.value = 'Erro ao criar item. Tente novamente.'
@@ -262,6 +301,24 @@ const criarItem = async () => {
             />
           </div>
         </div>
+      </div>
+      <div class="info-card">
+        <h3 class="section-title">
+          Fornecedores
+        </h3>
+        <VAutocomplete
+          v-model="fornecedoresSelecionados"
+          :items="todosFornecedoresCatalogo"
+          item-title="nome"
+          item-value="id"
+          label="Fornecedores deste item"
+          placeholder="Selecione um ou mais fornecedores"
+          multiple
+          chips
+          closable-chips
+          density="compact"
+          variant="outlined"
+        />
       </div>
     </div>
     <div class="observations">

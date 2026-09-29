@@ -3,10 +3,19 @@
     class="product-details"
     :hidden="!isOpen"
   >
-    <div class="header">
+    <div class="header d-flex justify-space-between align-center">
       <h2 class="title">
         Detalhes do Produto
       </h2>
+      <VChip
+        v-if="!temPermissao"
+        color="warning"
+        size="small"
+        variant="tonal"
+        prepend-icon="mdi-eye-outline"
+      >
+        Modo Somente Leitura
+      </VChip>
     </div>
 
     <!-- Alerta Informativo de Empréstimo -->
@@ -204,7 +213,10 @@
             />
           </div>
         </div>
-        <div class="d-flex justify-end mt-4">
+        <div
+          v-if="temPermissao"
+          class="d-flex justify-end mt-4"
+        >
           <VBtn
             color="primary"
             variant="outlined"
@@ -232,6 +244,7 @@
               item-value="id"
               density="compact"
               variant="outlined"
+              :disabled="!temPermissao"
               @update:model-value="(value) => {
                 abrirDialogCadastroUnidade(value)
               }"
@@ -249,6 +262,7 @@
               item-value="id"
               density="compact"
               variant="outlined"
+              :disabled="!temPermissao"
               @update:model-value="(value) => {
                 abrirDialogCadastroFabricante(value)
               }"
@@ -266,6 +280,7 @@
               item-value="id"
               density="compact"
               variant="outlined"
+              :disabled="!temPermissao"
               @update:model-value="(value) => {
                 abrirDialogCadastroLocalEstoque(value)
               }"
@@ -277,8 +292,66 @@
               v-model="itemEditado.gaveta"
               density="compact"
               variant="outlined"
+              :readonly="!temPermissao"
             />
           </div>
+        </div>
+      </div>
+
+      <!-- Fornecedores deste Item -->
+      <div class="info-card">
+        <h3 class="section-title">
+          Fornecedores Vinculados
+        </h3>
+        <div class="mb-3">
+          <div
+            v-if="fornecedoresDoItem.length === 0"
+            class="text-caption text-medium-emphasis mb-2"
+          >
+            Nenhum fornecedor vinculado a este item.
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <VChip
+              v-for="forn in fornecedoresDoItem"
+              :key="forn.id"
+              color="primary"
+              variant="tonal"
+              :closable="temPermissao"
+              @click:close="desvincularFornecedorItem(forn.id)"
+            >
+              {{ forn.nome }}
+              <span
+                v-if="forn.codigo"
+                class="text-caption ms-1"
+              >({{ forn.codigo }})</span>
+            </VChip>
+          </div>
+        </div>
+
+        <div
+          v-if="temPermissao"
+          class="d-flex align-center gap-2 mt-3"
+        >
+          <VAutocomplete
+            v-model="fornecedorSelecionadoParaVincular"
+            :items="fornecedoresDisponiveisParaVincular"
+            item-title="nome"
+            item-value="id"
+            label="Adicionar fornecedor..."
+            density="compact"
+            variant="outlined"
+            hide-details
+            class="flex-grow-1"
+          />
+          <VBtn
+            color="primary"
+            variant="tonal"
+            prepend-icon="mdi-plus"
+            :disabled="!fornecedorSelecionadoParaVincular"
+            @click="vincularFornecedorItem"
+          >
+            Vincular
+          </VBtn>
         </div>
       </div>
     </div>
@@ -291,6 +364,7 @@
         density="compact"
         variant="outlined"
         rows="3"
+        :readonly="!temPermissao"
       />
     </div>
     <div class="footer">
@@ -303,6 +377,7 @@
     </div>
     <div class="actions">
       <VBtn
+        v-if="temPermissao"
         color="primary"
         @click="salvarAlteracoes"
       >
@@ -312,7 +387,7 @@
         variant="outlined"
         @click="$emit('close')"
       >
-        Cancelar
+        {{ temPermissao ? 'Cancelar' : 'Fechar' }}
       </VBtn>
     </div>
   </div>
@@ -449,7 +524,8 @@
 <script setup>
 import estoque from '@/server/Estoque'
 import emprestimosApi from '@/server/Emprestimos'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onBeforeMount } from 'vue'
+import { podeGerenciarEstoque } from '@/utils/permissoes'
 import DialogCadastroFabricante from './DialogCadastroFabricante.vue'
 import DialogCadastroGrupo from './DialogCadastroGrupo.vue'
 import DialogCadastroLocalEstoque from './DialogCadastroLocalEstoque.vue'
@@ -492,9 +568,75 @@ const props = defineProps({
 
 const emit = defineEmits(['update:item', 'close'])
 
+const temPermissao = computed(() => podeGerenciarEstoque())
+
 // Cria uma cópia editável do item
 const itemEditado = ref({ ...props.item })
 const infoEmprestimo = ref(null)
+
+// Fornecedores vinculados
+const fornecedoresDoItem = ref([])
+const todosFornecedoresCatalogo = ref([])
+const fornecedorSelecionadoParaVincular = ref(null)
+
+const fornecedoresDisponiveisParaVincular = computed(() => {
+  const vinculadosIds = new Set(fornecedoresDoItem.value.map(f => f.id))
+  
+  return todosFornecedoresCatalogo.value.filter(f => !vinculadosIds.has(f.id))
+})
+
+const carregarFornecedoresItem = async () => {
+  if (props.item && props.item.id) {
+    try {
+      const res = await estoque.listarFornecedoresDoItem(props.item.id)
+      fornecedoresDoItem.value = Array.isArray(res.data) ? res.data : []
+    } catch (e) {
+      fornecedoresDoItem.value = []
+    }
+  } else {
+    fornecedoresDoItem.value = []
+  }
+}
+
+const carregarTodosFornecedoresCatalogo = async () => {
+  try {
+    const res = await estoque.listarFornecedoresCatalogo()
+    todosFornecedoresCatalogo.value = Array.isArray(res.data) ? res.data : []
+  } catch (e) {
+    todosFornecedoresCatalogo.value = []
+  }
+}
+
+const vincularFornecedorItem = async () => {
+  if (!fornecedorSelecionadoParaVincular.value || !props.item?.id) return
+  try {
+    await estoque.vincularFornecedor(props.item.id, fornecedorSelecionadoParaVincular.value)
+    fornecedorSelecionadoParaVincular.value = null
+    await carregarFornecedoresItem()
+    snackbarText.value = 'Fornecedor vinculado com sucesso!'
+    snackbarColor.value = 'success'
+    snackbar.value = true
+  } catch (e) {
+    snackbarText.value = 'Erro ao vincular fornecedor.'
+    snackbarColor.value = 'error'
+    snackbar.value = true
+  }
+}
+
+const desvincularFornecedorItem = async fornecedorId => {
+  if (!props.item?.id) return
+  try {
+    await estoque.desvincularFornecedor(props.item.id, fornecedorId)
+    await carregarFornecedoresItem()
+    snackbarText.value = 'Fornecedor desvinculado com sucesso!'
+    snackbarColor.value = 'success'
+    snackbar.value = true
+  } catch (e) {
+    snackbarText.value = 'Erro ao desvincular fornecedor.'
+    snackbarColor.value = 'error'
+    snackbar.value = true
+  }
+}
 
 const verificarEmprestimo = async () => {
   if (props.item && props.item.id) {
@@ -513,6 +655,7 @@ watch(
   () => props.item,
   () => {
     itemEditado.value = { ...props.item }
+    carregarFornecedoresItem()
   },
   { deep: true }
 )
@@ -522,6 +665,8 @@ watch(
   open => {
     if (open) {
       verificarEmprestimo()
+      carregarFornecedoresItem()
+      carregarTodosFornecedoresCatalogo()
     }
   }
 )

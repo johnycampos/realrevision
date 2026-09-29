@@ -1,10 +1,17 @@
 <script setup>
 import { VAvatar, VBtn, VCard, VCardText, VChip, VCol, VDialog, VDivider, VPagination, VRow, VSelect, VSpacer, VTextField } from 'vuetify/components'
+import { computed, ref, onMounted, watch } from 'vue'
+import { podeGerenciarEstoque } from '@/utils/permissoes'
 
 import estoque from '@/server/Estoque'
 import emprestimosApi from '@/server/Emprestimos'
 import Dialog from './dialog.vue'
 import DialogCriar from './dialogCriar.vue'
+import AbaFornecedores from './AbaFornecedores.vue'
+import AbaLogsEstoque from './AbaLogsEstoque.vue'
+
+const abaAtiva = ref('itens')
+const temPermissao = computed(() => podeGerenciarEstoque())
 
 const searchQuery = ref('')
 const rowPerPage = ref(10)
@@ -164,296 +171,343 @@ watch(searchQuery, () => {
 
 <template>
   <section>
-    <VCard
-      title="Estoque"
+    <VTabs
+      v-model="abaAtiva"
+      density="comfortable"
       class="mb-6"
     >
-      <VCardText>
-        <VRow>
-          <!-- 👉 Search  -->
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <VTextField
-              v-model="searchQuery"
-              label="Pesquisar"
-              density="compact"
-              placeholder="Pesquise por código, nome, grupo ou observações"
-              clearable
-              clear-icon="mdi-close"
-            />
-          </VCol>
-        </VRow>
-      </VCardText>
-    </VCard>
+      <VTab
+        value="itens"
+        prepend-icon="mdi-package-variant-closed"
+      >
+        Itens de Estoque
+      </VTab>
+      <VTab
+        value="fornecedores"
+        prepend-icon="mdi-truck-delivery"
+      >
+        Fornecedores
+      </VTab>
+      <VTab
+        v-if="temPermissao"
+        value="logs"
+        prepend-icon="mdi-history"
+      >
+        Log de Estoque
+      </VTab>
+    </VTabs>
 
-    <VCard>
-      <VCardText class="d-flex flex-wrap align-center justify-space-between gap-3">
-        <div class="d-flex align-center gap-2 flex-grow-1" style="max-width: 320px;">
-          <!-- 👉 Ordenação -->
-          <VSelect
-            v-model="ordenacaoSelecionada"
-            :items="opcoesOrdenacao"
-            label="Ordenar por"
-            density="compact"
-            variant="outlined"
-            class="flex-grow-1"
-            clearable
-          />
-
-          <!-- 👉 Direção da ordenação -->
-          <VBtn
-            v-if="ordenacaoSelecionada"
-            :icon="ordemCrescente ? 'mdi-sort-ascending' : 'mdi-sort-descending'"
-            variant="text"
-            @click="ordemCrescente = !ordemCrescente"
-          />
-        </div>
-
-        <!-- 👉 Add item button -->
-        <VBtn
-          class="w-100 w-sm-auto"
-          prepend-icon="mdi-plus"
-          @click="abrirCriarItem"
+    <VWindow v-model="abaAtiva">
+      <VWindowItem value="itens">
+        <VCard
+          title="Estoque"
+          class="mb-6"
         >
-          Adicionar Item
-        </VBtn>
-      </VCardText>
-
-      <VDivider />
-
-      <div class="table-responsive">
-        <VTable class="text-no-wrap">
-        <!-- 👉 table head -->
-        <thead>
-          <tr>
-            <th scope="col">
-              CÓDIGO
-            </th>
-            <th scope="col">
-              NOME
-            </th>
-            <th scope="col">
-              GRUPO
-            </th>
-            <th scope="col">
-              QUANTIDADE
-            </th>
-            <th scope="col">
-              PREÇO
-            </th>
-            <th scope="col">
-              GAVETA
-            </th>
-          </tr>
-        </thead>
-
-        <!-- 👉 table body -->
-        <tbody>
-          <tr
-            v-for="item in itensPaginados"
-            :key="item.id"
-            class="cursor-pointer"
-            @click="abrirDetalhes(item)"
-          >
-            <!-- 👉 Código -->
-            <td>
-              <div class="d-flex align-center">
-                <VAvatar
-                  variant="tonal"
-                  color="primary"
-                  class="me-3"
-                  size="34"
-                >
-                  <span>{{ item.codigo.substring(0, 2) }}</span>
-                </VAvatar>
-                <span class="text-medium-emphasis">{{ item.codigo }}</span>
-              </div>
-            </td>
-
-            <!-- 👉 Nome -->
-            <td>
-              <div class="d-flex flex-column">
-                <div class="d-flex align-center gap-2 flex-wrap">
-                  <h6 class="text-sm font-weight-medium">
-                    {{ item.nome }}
-                  </h6>
-                  <VChip
-                    v-if="itensEmprestadosMap[item.id]"
-                    size="x-small"
-                    :color="itensEmprestadosMap[item.id].pago ? 'info' : 'warning'"
-                    variant="tonal"
-                  >
-                    Emprestado de {{ itensEmprestadosMap[item.id].loja_origem_nome }} ({{ itensEmprestadosMap[item.id].quantidade_emprestada }} un • {{ itensEmprestadosMap[item.id].pago ? 'Pago' : 'Não Pago' }})
-                  </VChip>
-                </div>
-                <span class="text-xs text-medium-emphasis">{{ item.nome_curto }}</span>
-              </div>
-            </td>
-
-            <!-- 👉 Grupo -->
-            <td>
-              <div class="d-flex flex-column">
-                <span class="text-medium-emphasis">{{ item.grupo_nome }}</span>
-                <span class="text-xs text-medium-emphasis">{{ item.subgrupo_nome }}</span>
-              </div>
-            </td>
-
-            <!-- 👉 Quantidade -->
-            <td>
-              <VChip
-                :color="item.quantidade_disponivel > item.quantidade_minima ? 'success' : 'error'"
-                size="small"
-                class="text-capitalize"
+          <VCardText>
+            <VRow>
+              <!-- 👉 Search  -->
+              <VCol
+                cols="12"
+                sm="4"
               >
-                {{ item.quantidade_disponivel }}
-              </VChip>
-            </td>
+                <VTextField
+                  v-model="searchQuery"
+                  label="Pesquisar"
+                  density="compact"
+                  placeholder="Pesquise por código, nome, grupo ou observações"
+                  clearable
+                  clear-icon="mdi-close"
+                />
+              </VCol>
+            </VRow>
+          </VCardText>
+        </VCard>
 
-            <!-- 👉 Preço -->
-            <td class="text-medium-emphasis">
-              {{ formatarPreco(item.preco_consumidor) }}
-            </td>
-
-            <!-- 👉 GAVETA -->
-            <td>
-              <div class="d-flex flex-column">
-                <h6 class="text-sm font-weight-medium">
-                  {{ item.local_estoque_id }}
-                </h6>
-                <span class="text-xs text-medium-emphasis">{{ item.gaveta }}</span>
-              </div>
-            </td>
-
-            <!--
-              👉 Actions 
-              <td>
-              <VBtn
-              size="x-small"
-              color="default"
-              variant="plain"
-              icon
-              @click.stop
-              >
-              <VIcon
-              size="24"
-              icon="mdi-dots-vertical"
-              />
-
-              <VMenu activator="parent">
-              <VList>
-              <VListItem @click="abrirDetalhes(item)">
-              <template #prepend>
-              <VIcon
-              icon="mdi-eye-outline"
-              :size="20"
-              class="me-3"
-              />
-              </template>
-              <VListItemTitle>Visualizar</VListItemTitle>
-              </VListItem>
-
-              <VListItem>
-              <template #prepend>
-              <VIcon
-              icon="mdi-pencil-outline"
-              :size="20"
-              class="me-3"
-              />
-              </template>
-              <VListItemTitle>Editar</VListItemTitle>
-              </VListItem>
-
-              <VListItem>
-              <template #prepend>
-              <VIcon
-              icon="mdi-delete-outline"
-              :size="20"
-              class="me-3"
-              />
-              </template>
-              <VListItemTitle>Excluir</VListItemTitle>
-              </VListItem>
-              </VList>
-              </VMenu>
-              </VBtn>
-              </td>
-            -->
-          </tr>
-        </tbody>
-
-        <!-- 👉 table footer  -->
-        <tfoot v-show="!itens.length">
-          <tr>
-            <td
-              colspan="6"
-              class="text-center"
+        <VCard>
+          <VCardText class="d-flex flex-wrap align-center justify-space-between gap-3">
+            <div
+              class="d-flex align-center gap-2 flex-grow-1"
+              style="max-width: 320px;"
             >
-              Nenhum item encontrado
-            </td>
-          </tr>
-        </tfoot>
-      </VTable>
-      </div>
+              <!-- 👉 Ordenação -->
+              <VSelect
+                v-model="ordenacaoSelecionada"
+                :items="opcoesOrdenacao"
+                label="Ordenar por"
+                density="compact"
+                variant="outlined"
+                class="flex-grow-1"
+                clearable
+              />
 
-      <VDivider />
+              <!-- 👉 Direção da ordenação -->
+              <VBtn
+                v-if="ordenacaoSelecionada"
+                :icon="ordemCrescente ? 'mdi-sort-ascending' : 'mdi-sort-descending'"
+                variant="text"
+                @click="ordemCrescente = !ordemCrescente"
+              />
+            </div>
 
-      <VCardText class="d-flex align-center flex-wrap justify-end gap-4 pa-2">
-        <div
-          class="d-flex align-center me-3"
-          style="width: 171px;"
+            <!-- 👉 Add item button -->
+            <VBtn
+              v-if="temPermissao"
+              class="w-100 w-sm-auto"
+              prepend-icon="mdi-plus"
+              @click="abrirCriarItem"
+            >
+              Adicionar Item
+            </VBtn>
+          </VCardText>
+
+          <VDivider />
+
+          <div class="table-responsive">
+            <VTable class="text-no-wrap">
+              <!-- 👉 table head -->
+              <thead>
+                <tr>
+                  <th scope="col">
+                    CÓDIGO
+                  </th>
+                  <th scope="col">
+                    NOME
+                  </th>
+                  <th scope="col">
+                    GRUPO
+                  </th>
+                  <th scope="col">
+                    QUANTIDADE
+                  </th>
+                  <th scope="col">
+                    PREÇO
+                  </th>
+                  <th scope="col">
+                    GAVETA
+                  </th>
+                </tr>
+              </thead>
+
+              <!-- 👉 table body -->
+              <tbody>
+                <tr
+                  v-for="item in itensPaginados"
+                  :key="item.id"
+                  class="cursor-pointer"
+                  @click="abrirDetalhes(item)"
+                >
+                  <!-- 👉 Código -->
+                  <td>
+                    <div class="d-flex align-center">
+                      <VAvatar
+                        variant="tonal"
+                        color="primary"
+                        class="me-3"
+                        size="34"
+                      >
+                        <span>{{ item.codigo.substring(0, 2) }}</span>
+                      </VAvatar>
+                      <span class="text-medium-emphasis">{{ item.codigo }}</span>
+                    </div>
+                  </td>
+
+                  <!-- 👉 Nome -->
+                  <td>
+                    <div class="d-flex flex-column">
+                      <div class="d-flex align-center gap-2 flex-wrap">
+                        <h6 class="text-sm font-weight-medium">
+                          {{ item.nome }}
+                        </h6>
+                        <VChip
+                          v-if="itensEmprestadosMap[item.id]"
+                          size="x-small"
+                          :color="itensEmprestadosMap[item.id].pago ? 'info' : 'warning'"
+                          variant="tonal"
+                        >
+                          Emprestado de {{ itensEmprestadosMap[item.id].loja_origem_nome }} ({{ itensEmprestadosMap[item.id].quantidade_emprestada }} un • {{ itensEmprestadosMap[item.id].pago ? 'Pago' : 'Não Pago' }})
+                        </VChip>
+                      </div>
+                      <span class="text-xs text-medium-emphasis">{{ item.nome_curto }}</span>
+                    </div>
+                  </td>
+
+                  <!-- 👉 Grupo -->
+                  <td>
+                    <div class="d-flex flex-column">
+                      <span class="text-medium-emphasis">{{ item.grupo_nome }}</span>
+                      <span class="text-xs text-medium-emphasis">{{ item.subgrupo_nome }}</span>
+                    </div>
+                  </td>
+
+                  <!-- 👉 Quantidade -->
+                  <td>
+                    <VChip
+                      :color="item.quantidade_disponivel > item.quantidade_minima ? 'success' : 'error'"
+                      size="small"
+                      class="text-capitalize"
+                    >
+                      {{ item.quantidade_disponivel }}
+                    </VChip>
+                  </td>
+
+                  <!-- 👉 Preço -->
+                  <td class="text-medium-emphasis">
+                    {{ formatarPreco(item.preco_consumidor) }}
+                  </td>
+
+                  <!-- 👉 GAVETA -->
+                  <td>
+                    <div class="d-flex flex-column">
+                      <h6 class="text-sm font-weight-medium">
+                        {{ item.local_estoque_id }}
+                      </h6>
+                      <span class="text-xs text-medium-emphasis">{{ item.gaveta }}</span>
+                    </div>
+                  </td>
+
+                  <!--
+                    👉 Actions 
+                    <td>
+                    <VBtn
+                    size="x-small"
+                    color="default"
+                    variant="plain"
+                    icon
+                    @click.stop
+                    >
+                    <VIcon
+                    size="24"
+                    icon="mdi-dots-vertical"
+                    />
+
+                    <VMenu activator="parent">
+                    <VList>
+                    <VListItem @click="abrirDetalhes(item)">
+                    <template #prepend>
+                    <VIcon
+                    icon="mdi-eye-outline"
+                    :size="20"
+                    class="me-3"
+                    />
+                    </template>
+                    <VListItemTitle>Visualizar</VListItemTitle>
+                    </VListItem>
+
+                    <VListItem>
+                    <template #prepend>
+                    <VIcon
+                    icon="mdi-pencil-outline"
+                    :size="20"
+                    class="me-3"
+                    />
+                    </template>
+                    <VListItemTitle>Editar</VListItemTitle>
+                    </VListItem>
+
+                    <VListItem>
+                    <template #prepend>
+                    <VIcon
+                    icon="mdi-delete-outline"
+                    :size="20"
+                    class="me-3"
+                    />
+                    </template>
+                    <VListItemTitle>Excluir</VListItemTitle>
+                    </VListItem>
+                    </VList>
+                    </VMenu>
+                    </VBtn>
+                    </td>
+                  -->
+                </tr>
+              </tbody>
+
+              <!-- 👉 table footer  -->
+              <tfoot v-show="!itens.length">
+                <tr>
+                  <td
+                    colspan="6"
+                    class="text-center"
+                  >
+                    Nenhum item encontrado
+                  </td>
+                </tr>
+              </tfoot>
+            </VTable>
+          </div>
+
+          <VDivider />
+
+          <VCardText class="d-flex align-center flex-wrap justify-end gap-4 pa-2">
+            <div
+              class="d-flex align-center me-3"
+              style="width: 171px;"
+            >
+              <span class="text-no-wrap me-3">Itens por página:</span>
+
+              <VSelect
+                v-model="rowPerPage"
+                density="compact"
+                variant="plain"
+                class="user-pagination-select"
+                :items="[10, 20, 30, 50]"
+              />
+            </div>
+
+            <div class="d-flex align-center">
+              <h6 class="text-sm font-weight-regular">
+                {{ paginationData }}
+              </h6>
+
+              <VPagination
+                v-model="currentPage"
+                size="small"
+                :total-visible="1"
+                :length="totalPage"
+              />
+            </div>
+          </VCardText>
+        </VCard>
+
+        <!-- Dialog de Detalhes -->
+        <VDialog
+          v-model="dialogDetalhes"
+          max-width="800"
         >
-          <span class="text-no-wrap me-3">Itens por página:</span>
-
-          <VSelect
-            v-model="rowPerPage"
-            density="compact"
-            variant="plain"
-            class="user-pagination-select"
-            :items="[10, 20, 30, 50]"
+          <Dialog
+            :item="itemSelecionado"
+            :is-open="dialogDetalhes"
+            @close="dialogDetalhes = false"
+            @update:item="fetchItens"
           />
-        </div>
+        </VDialog>
 
-        <div class="d-flex align-center">
-          <h6 class="text-sm font-weight-regular">
-            {{ paginationData }}
-          </h6>
-
-          <VPagination
-            v-model="currentPage"
-            size="small"
-            :total-visible="1"
-            :length="totalPage"
+        <!-- Dialog de Criação -->
+        <VDialog
+          v-model="dialogCriar"
+          max-width="800"
+        >
+          <DialogCriar
+            :is-open="dialogCriar"
+            @close="dialogCriar = false"
+            @update:item="fetchItens"
           />
-        </div>
-      </VCardText>
-    </VCard>
+        </VDialog>
+      </VWindowItem>
 
-    <!-- Dialog de Detalhes -->
-    <VDialog
-      v-model="dialogDetalhes"
-      max-width="800"
-    >
-      <Dialog
-        :item="itemSelecionado"
-        :is-open="dialogDetalhes"
-        @close="dialogDetalhes = false"
-        @update:item="fetchItens"
-      />
-    </VDialog>
+      <!-- Aba Fornecedores -->
+      <VWindowItem value="fornecedores">
+        <AbaFornecedores />
+      </VWindowItem>
 
-    <!-- Dialog de Criação -->
-    <VDialog
-      v-model="dialogCriar"
-      max-width="800"
-    >
-      <DialogCriar
-        :is-open="dialogCriar"
-        @close="dialogCriar = false"
-        @update:item="fetchItens"
-      />
-    </VDialog>
+      <!-- Aba Log de Estoque -->
+      <VWindowItem
+        v-if="temPermissao"
+        value="logs"
+      >
+        <AbaLogsEstoque />
+      </VWindowItem>
+    </VWindow>
   </section>
 </template>
 

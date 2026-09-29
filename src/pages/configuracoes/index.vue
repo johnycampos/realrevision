@@ -74,6 +74,7 @@ const rolesDisponiveis = computed(() => {
   if (isSuperAdmin.value) {
     opcoes.push({ title: 'Super Administrador (Matriz)', value: 'super_admin' })
   }
+  
   return opcoes
 })
 
@@ -158,7 +159,7 @@ const abrirModalCriar = () => {
   dialogUsuario.value = true
 }
 
-const abrirModalEditar = async (usuario) => {
+const abrirModalEditar = async usuario => {
   isEditing.value = true
   editUserId.value = usuario.id
   activeTab.value = 'dados'
@@ -180,6 +181,7 @@ const abrirModalEditar = async (usuario) => {
           hora_fim: existente.hora_fim?.slice(0, 5) || '18:00'
         }
       }
+      
       return {
         dia_semana: dia.id,
         dia_nome: dia.nome,
@@ -211,11 +213,13 @@ const abrirModalEditar = async (usuario) => {
 const salvarUsuario = async () => {
   if (!formUsuario.value.username) {
     mostrarAlerta('O nome de usuário é obrigatório', 'warning')
+    
     return
   }
 
   if (!isEditing.value && !formUsuario.value.password) {
     mostrarAlerta('A senha é obrigatória para novo usuário', 'warning')
+    
     return
   }
 
@@ -264,7 +268,7 @@ const salvarUsuario = async () => {
   }
 }
 
-const toggleAtivo = async (usuario) => {
+const toggleAtivo = async usuario => {
   try {
     const novoStatus = !usuario.ativo
     await usuariosApi.atualizar(usuario.id, { ativo: novoStatus })
@@ -286,7 +290,9 @@ onMounted(() => {
     <VCard class="mb-6">
       <VCardText class="d-flex flex-wrap justify-space-between align-center gap-4">
         <div>
-          <h2 class="text-h4 font-weight-medium">Configurações de Usuários</h2>
+          <h2 class="text-h4 font-weight-medium">
+            Configurações de Usuários
+          </h2>
           <p class="text-body-1 text-medium-emphasis mb-0">
             Gerencie colaboradores, papéis de acesso, restrições de horários e menus permitidos.
           </p>
@@ -306,7 +312,10 @@ onMounted(() => {
     <VCard class="mb-6">
       <VCardText>
         <VRow>
-          <VCol cols="12" md="6">
+          <VCol
+            cols="12"
+            md="6"
+          >
             <VTextField
               v-model="searchQuery"
               placeholder="Buscar por usuário ou loja..."
@@ -317,7 +326,11 @@ onMounted(() => {
             />
           </VCol>
 
-          <VCol v-if="isSuperAdmin" cols="12" md="6">
+          <VCol
+            v-if="isSuperAdmin"
+            cols="12"
+            md="6"
+          >
             <VSelect
               v-model="filtroLoja"
               :items="lojas"
@@ -338,136 +351,195 @@ onMounted(() => {
     <VCard :loading="isLoading">
       <div class="table-responsive">
         <VTable class="text-no-wrap">
-        <thead>
-          <tr>
-            <th class="text-uppercase">Usuário</th>
-            <th class="text-uppercase">Papel</th>
-            <th class="text-uppercase">Loja</th>
-            <th class="text-uppercase text-center">Status</th>
-            <th class="text-uppercase text-center">Ações</th>
-          </tr>
-        </thead>
+          <thead>
+            <tr>
+              <th class="text-uppercase">
+                Usuário
+              </th>
+              <th class="text-uppercase">
+                Papel
+              </th>
+              <th class="text-uppercase">
+                Loja
+              </th>
+              <th class="text-uppercase text-center">
+                Status
+              </th>
+              <th class="text-uppercase text-center">
+                Ações
+              </th>
+            </tr>
+          </thead>
 
-        <tbody>
-          <tr v-for="user in usuariosFiltrados" :key="user.id">
-            <td class="font-weight-medium">
-              <div class="d-flex align-center">
-                <VAvatar color="primary" variant="tonal" size="34" class="me-3">
-                  <VIcon icon="mdi-account-outline" size="20" />
-                </VAvatar>
-                <span>{{ user.username }}</span>
-              </div>
-            </td>
+          <tbody>
+            <tr
+              v-for="user in usuariosFiltrados"
+              :key="user.id"
+            >
+              <td class="font-weight-medium">
+                <div class="d-flex align-center">
+                  <VAvatar
+                    color="primary"
+                    variant="tonal"
+                    size="34"
+                    class="me-3"
+                  >
+                    <VIcon
+                      icon="mdi-account-outline"
+                      size="20"
+                    />
+                  </VAvatar>
+                  <span>{{ user.username }}</span>
+                </div>
+              </td>
 
-            <td>
-              <VChip
-                v-if="user.role === 'super_admin'"
-                color="error"
-                size="small"
-                variant="tonal"
-                prepend-icon="mdi-shield-crown"
-              >
-                Super Admin
-              </VChip>
-              <VChip
-                v-else-if="user.role === 'admin_loja'"
-                color="warning"
-                size="small"
-                variant="tonal"
-                prepend-icon="mdi-shield-account"
-              >
-                Gerente da Loja
-              </VChip>
-              <div v-else class="d-flex align-center flex-wrap gap-1">
+              <td>
                 <VChip
-                  color="info"
+                  v-if="user.role === 'super_admin'"
+                  color="error"
                   size="small"
                   variant="tonal"
-                  prepend-icon="mdi-account"
+                  prepend-icon="mdi-shield-crown"
                 >
-                  Funcionário
+                  Super Admin
                 </VChip>
                 <VChip
-                  v-if="user.estoquista"
+                  v-else-if="user.role === 'admin_loja'"
+                  color="warning"
+                  size="small"
+                  variant="tonal"
+                  prepend-icon="mdi-shield-account"
+                >
+                  Gerente da Loja
+                </VChip>
+                <div
+                  v-else
+                  class="d-flex align-center flex-wrap gap-1"
+                >
+                  <VChip
+                    color="info"
+                    size="small"
+                    variant="tonal"
+                    prepend-icon="mdi-account"
+                  >
+                    Funcionário
+                  </VChip>
+                  <VChip
+                    v-if="user.estoquista"
+                    color="primary"
+                    size="small"
+                    variant="tonal"
+                    prepend-icon="mdi-warehouse"
+                  >
+                    Estoquista
+                  </VChip>
+                </div>
+              </td>
+
+              <td>
+                <VChip
+                  size="small"
+                  variant="outlined"
                   color="primary"
+                >
+                  {{ user.loja_nome || 'Matriz' }}
+                </VChip>
+              </td>
+
+              <td class="text-center">
+                <VChip
+                  :color="user.ativo ? 'success' : 'secondary'"
                   size="small"
                   variant="tonal"
-                  prepend-icon="mdi-warehouse"
                 >
-                  Estoquista
+                  {{ user.ativo ? 'Ativo' : 'Inativo' }}
                 </VChip>
-              </div>
-            </td>
+              </td>
 
-            <td>
-              <VChip size="small" variant="outlined" color="primary">
-                {{ user.loja_nome || 'Matriz' }}
-              </VChip>
-            </td>
+              <td class="text-center">
+                <VBtn
+                  icon
+                  size="small"
+                  variant="text"
+                  color="primary"
+                  title="Editar Usuário"
+                  @click="abrirModalEditar(user)"
+                >
+                  <VIcon icon="mdi-pencil-outline" />
+                </VBtn>
 
-            <td class="text-center">
-              <VChip
-                :color="user.ativo ? 'success' : 'secondary'"
-                size="small"
-                variant="tonal"
+                <VBtn
+                  icon
+                  size="small"
+                  variant="text"
+                  :color="user.ativo ? 'error' : 'success'"
+                  :title="user.ativo ? 'Desativar Usuário' : 'Ativar Usuário'"
+                  @click="toggleAtivo(user)"
+                >
+                  <VIcon :icon="user.ativo ? 'mdi-account-off-outline' : 'mdi-account-check-outline'" />
+                </VBtn>
+              </td>
+            </tr>
+
+            <tr v-if="usuariosFiltrados.length === 0">
+              <td
+                colspan="5"
+                class="text-center py-6 text-medium-emphasis"
               >
-                {{ user.ativo ? 'Ativo' : 'Inativo' }}
-              </VChip>
-            </td>
-
-            <td class="text-center">
-              <VBtn
-                icon
-                size="small"
-                variant="text"
-                color="primary"
-                title="Editar Usuário"
-                @click="abrirModalEditar(user)"
-              >
-                <VIcon icon="mdi-pencil-outline" />
-              </VBtn>
-
-              <VBtn
-                icon
-                size="small"
-                variant="text"
-                :color="user.ativo ? 'error' : 'success'"
-                :title="user.ativo ? 'Desativar Usuário' : 'Ativar Usuário'"
-                @click="toggleAtivo(user)"
-              >
-                <VIcon :icon="user.ativo ? 'mdi-account-off-outline' : 'mdi-account-check-outline'" />
-              </VBtn>
-            </td>
-          </tr>
-
-          <tr v-if="usuariosFiltrados.length === 0">
-            <td colspan="5" class="text-center py-6 text-medium-emphasis">
-              Nenhum usuário encontrado.
-            </td>
-          </tr>
-        </tbody>
-      </VTable>
+                Nenhum usuário encontrado.
+              </td>
+            </tr>
+          </tbody>
+        </VTable>
       </div>
     </VCard>
 
     <!-- Dialog de Cadastro / Edição -->
-    <VDialog v-model="dialogUsuario" max-width="800" persistent>
+    <VDialog
+      v-model="dialogUsuario"
+      max-width="800"
+      persistent
+    >
       <VCard>
         <VCardTitle class="pa-4 d-flex justify-space-between align-center">
           <span class="text-h6 font-weight-bold">
             {{ isEditing ? 'Editar Usuário: ' + formUsuario.username : 'Novo Usuário' }}
           </span>
-          <VBtn icon variant="text" size="small" @click="dialogUsuario = false">
+          <VBtn
+            icon
+            variant="text"
+            size="small"
+            @click="dialogUsuario = false"
+          >
             <VIcon icon="mdi-close" />
           </VBtn>
         </VCardTitle>
 
         <VDivider />
 
-        <VTabs v-model="activeTab" density="compact" class="px-4 pt-2">
-          <VTab value="dados" prepend-icon="mdi-account">Dados de Acesso</VTab>
-          <VTab value="menus" prepend-icon="mdi-menu">Permissões de Menus</VTab>
-          <VTab value="horarios" prepend-icon="mdi-clock-outline">Horários de Login</VTab>
+        <VTabs
+          v-model="activeTab"
+          density="compact"
+          class="px-4 pt-2"
+        >
+          <VTab
+            value="dados"
+            prepend-icon="mdi-account"
+          >
+            Dados de Acesso
+          </VTab>
+          <VTab
+            value="menus"
+            prepend-icon="mdi-menu"
+          >
+            Permissões de Menus
+          </VTab>
+          <VTab
+            value="horarios"
+            prepend-icon="mdi-clock-outline"
+          >
+            Horários de Login
+          </VTab>
         </VTabs>
 
         <VCardText class="pa-4">
@@ -475,7 +547,10 @@ onMounted(() => {
             <!-- Aba 1: Dados Gerais -->
             <VWindowItem value="dados">
               <VRow class="pt-2">
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="formUsuario.username"
                     label="Nome de Usuário (Login) *"
@@ -485,7 +560,10 @@ onMounted(() => {
                   />
                 </VCol>
 
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VTextField
                     v-model="formUsuario.password"
                     :label="isEditing ? 'Nova Senha (opcional)' : 'Senha de Acesso *'"
@@ -495,7 +573,10 @@ onMounted(() => {
                   />
                 </VCol>
 
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSelect
                     v-model="formUsuario.role"
                     :items="rolesDisponiveis"
@@ -504,7 +585,10 @@ onMounted(() => {
                   />
                 </VCol>
 
-                <VCol cols="12" md="6">
+                <VCol
+                  cols="12"
+                  md="6"
+                >
                   <VSelect
                     v-model="formUsuario.loja_id"
                     :items="lojas"
@@ -596,50 +680,60 @@ onMounted(() => {
                 </p>
 
                 <div class="table-responsive">
-                  <VTable density="compact" class="border rounded">
-                  <thead>
-                    <tr>
-                      <th>Dia da Semana</th>
-                      <th class="text-center">Permitido</th>
-                      <th>Hora Início</th>
-                      <th>Hora Fim</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="h in formUsuario.horarios" :key="h.dia_semana">
-                      <td class="font-weight-medium">{{ h.dia_nome }}</td>
-                      <td class="text-center">
-                        <VSwitch
-                          v-model="h.ativo"
-                          color="primary"
-                          density="compact"
-                          hide-details
-                          :disabled="formUsuario.role === 'super_admin' || formUsuario.role === 'admin_loja'"
-                        />
-                      </td>
-                      <td>
-                        <VTextField
-                          v-model="h.hora_inicio"
-                          type="time"
-                          density="compact"
-                          hide-details
-                          :disabled="!h.ativo || formUsuario.role === 'super_admin' || formUsuario.role === 'admin_loja'"
-                          style="max-width: 140px;"
-                        />
-                      </td>
-                      <td>
-                        <VTextField
-                          v-model="h.hora_fim"
-                          type="time"
-                          density="compact"
-                          hide-details
-                          :disabled="!h.ativo || formUsuario.role === 'super_admin' || formUsuario.role === 'admin_loja'"
-                          style="max-width: 140px;"
-                        />
-                      </td>
-                    </tr>
-                  </tbody>
-                </VTable>
+                  <VTable
+                    density="compact"
+                    class="border rounded"
+                  >
+                    <thead>
+                      <tr>
+                        <th>Dia da Semana</th>
+                        <th class="text-center">
+                          Permitido
+                        </th>
+                        <th>Hora Início</th>
+                        <th>Hora Fim</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="h in formUsuario.horarios"
+                        :key="h.dia_semana"
+                      >
+                        <td class="font-weight-medium">
+                          {{ h.dia_nome }}
+                        </td>
+                        <td class="text-center">
+                          <VSwitch
+                            v-model="h.ativo"
+                            color="primary"
+                            density="compact"
+                            hide-details
+                            :disabled="formUsuario.role === 'super_admin' || formUsuario.role === 'admin_loja'"
+                          />
+                        </td>
+                        <td>
+                          <VTextField
+                            v-model="h.hora_inicio"
+                            type="time"
+                            density="compact"
+                            hide-details
+                            :disabled="!h.ativo || formUsuario.role === 'super_admin' || formUsuario.role === 'admin_loja'"
+                            style="max-width: 140px;"
+                          />
+                        </td>
+                        <td>
+                          <VTextField
+                            v-model="h.hora_fim"
+                            type="time"
+                            density="compact"
+                            hide-details
+                            :disabled="!h.ativo || formUsuario.role === 'super_admin' || formUsuario.role === 'admin_loja'"
+                            style="max-width: 140px;"
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </VTable>
                 </div>
               </div>
             </VWindowItem>
@@ -650,10 +744,18 @@ onMounted(() => {
 
         <VCardActions class="pa-4">
           <VSpacer />
-          <VBtn variant="outlined" color="secondary" @click="dialogUsuario = false">
+          <VBtn
+            variant="outlined"
+            color="secondary"
+            @click="dialogUsuario = false"
+          >
             Cancelar
           </VBtn>
-          <VBtn color="primary" :loading="isSaving" @click="salvarUsuario">
+          <VBtn
+            color="primary"
+            :loading="isSaving"
+            @click="salvarUsuario"
+          >
             Salvar
           </VBtn>
         </VCardActions>

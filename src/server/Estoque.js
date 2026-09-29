@@ -194,5 +194,80 @@ export default {
         console.error('Erro ao atualizar estoque:', error)
         throw error
       })
+  },
+
+  // Fornecedores (catálogo global)
+  listarFornecedoresCatalogo: () => {
+    return API.get('/api/fornecedores')
+      .then(response => response)
+      .catch(error => {
+        console.error('Erro ao listar fornecedores:', error)
+        throw error
+      })
+  },
+
+  criarFornecedorCatalogo: dados => {
+    return API.post('/api/fornecedores', dados)
+      .then(response => response)
+      .catch(error => {
+        console.error('Erro ao criar fornecedor:', error)
+        throw error
+      })
+  },
+
+  atualizarFornecedorCatalogo: (id, dados) => {
+    return API.put(`/api/fornecedores/${id}`, dados)
+      .then(response => response)
+      .catch(error => {
+        console.error('Erro ao atualizar fornecedor:', error)
+        throw error
+      })
+  },
+
+  deletarFornecedorCatalogo: id => {
+    return API.delete(`/api/fornecedores/${id}`)
+      .then(response => response)
+      .catch(error => {
+        console.error('Erro ao deletar fornecedor:', error)
+        throw error
+      })
+  },
+
+  // Vínculos Item <-> Fornecedores
+  listarFornecedoresDoItem: itemId => {
+    return API.get(`/api/itens/${itemId}/fornecedores`)
+      .then(response => response)
+      .catch(error => {
+        console.error('Erro ao listar fornecedores do item:', error)
+        throw error
+      })
+  },
+
+  vincularFornecedor: (itemId, fornecedorId) => {
+    return API.post(`/api/itens/${itemId}/fornecedores`, { fornecedor_id: fornecedorId })
+      .then(response => response)
+      .catch(error => {
+        console.error('Erro ao vincular fornecedor ao item:', error)
+        throw error
+      })
+  },
+
+  desvincularFornecedor: (itemId, fornecedorId) => {
+    return API.delete(`/api/itens/${itemId}/fornecedores/${fornecedorId}`)
+      .then(response => response)
+      .catch(error => {
+        console.error('Erro ao desvincular fornecedor do item:', error)
+        throw error
+      })
+  },
+
+  // Consulta de auditoria de estoque (Fase 8)
+  listarLogsEstoque: (params = {}) => {
+    return API.get('/api/audit-log', { params })
+      .then(response => response)
+      .catch(error => {
+        console.error('Erro ao listar logs de estoque:', error)
+        throw error
+      })
   }
 }
