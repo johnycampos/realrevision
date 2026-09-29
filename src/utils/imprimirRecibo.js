@@ -1,6 +1,6 @@
 /**
  * Utilitário para Impressão de Cupom Não Fiscal (Térmica 80mm)
- * Abre uma nova janela autocontida formatada para impressão térmica e aciona window.print().
+ * Layout adaptado para padrão de balcão de auto-peças / oficina.
  */
 
 const formatarMoeda = valor => {
@@ -10,28 +10,17 @@ const formatarMoeda = valor => {
   }).format(Number(valor) || 0)
 }
 
-const formatarData = dataIso => {
-  if (!dataIso) {
-    const agora = new Date()
-    return agora.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-  }
-  const d = new Date(dataIso)
-  if (isNaN(d.getTime())) return String(dataIso)
-  return d.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
+const formatarDataHora = dataIso => {
+  const d = dataIso ? new Date(dataIso) : new Date()
+  const dataValida = !isNaN(d.getTime()) ? d : new Date()
+
+  const dia = String(dataValida.getDate()).padStart(2, '0')
+  const mes = String(dataValida.getMonth() + 1).padStart(2, '0')
+  const ano = String(dataValida.getFullYear()).slice(-2)
+  const hora = String(dataValida.getHours()).padStart(2, '0')
+  const min = String(dataValida.getMinutes()).padStart(2, '0')
+
+  return `${dia}/${mes}/${ano} ${hora}:${min}`
 }
 
 const escaparHtml = str => {
@@ -64,7 +53,7 @@ const escaparHtml = str => {
  */
 export function imprimirRecibo(dadosRecibo = {}) {
   const {
-    lojaNome = 'Real Revision',
+    lojaNome = 'REAL REVISION',
     vendaId = '',
     dataVenda = null,
     vendedorNome = 'Atendente',
@@ -79,30 +68,37 @@ export function imprimirRecibo(dadosRecibo = {}) {
     troco = null,
   } = dadosRecibo
 
-  const printWindow = window.open('', '_blank', 'width=380,height=650,menubar=no,toolbar=no,location=no,status=no')
+  const printWindow = window.open('', '_blank', 'width=380,height=680,menubar=no,toolbar=no,location=no,status=no')
 
   if (!printWindow) {
-    alert('Não foi possível abrir a janela de impressão. Por favor, verifique se o bloqueador de pop-ups está ativado.')
+    alert('Não foi possível abrir a janela de impressão. Por favor, verifique se o bloqueador de pop-ups do navegador está ativado.')
     return
   }
 
-  const dataFormatada = formatarData(dataVenda)
-  const subtotalCalculado = subtotal !== null ? subtotal : itens.reduce((acc, it) => acc + (Number(it.totalItem) || (Number(it.quantidade) * Number(it.precoUnitario)) || 0), 0)
-  const temDesconto = Number(descontoValor) > 0 || Number(descontoPercentual) > 0
+  const dataHoraFormatada = formatarDataHora(dataVenda)
+  const subtotalCalculado = subtotal !== null
+    ? Number(subtotal)
+    : itens.reduce((acc, it) => acc + (Number(it.totalItem) || (Number(it.quantidade) * Number(it.precoUnitario)) || 0), 0)
+
+  const valorDescontoTotal = Number(descontoValor) > 0
+    ? Number(descontoValor)
+    : (Number(descontoPercentual) > 0 ? (subtotalCalculado * Number(descontoPercentual) / 100) : 0)
+
+  const temDesconto = valorDescontoTotal > 0
 
   const htmlItens = itens.map((item, idx) => {
-    const cod = item.codigo ? `[${escaparHtml(item.codigo)}] ` : ''
-    const nome = escaparHtml(item.nome || `Item ${idx + 1}`)
+    const cod = item.codigo ? `${escaparHtml(item.codigo)} - ` : ''
+    const nome = escaparHtml(item.nome || `Item #${idx + 1}`)
     const qtd = Number(item.quantidade) || 1
     const unit = formatarMoeda(item.precoUnitario || 0)
     const tot = formatarMoeda(item.totalItem !== undefined ? item.totalItem : (qtd * (Number(item.precoUnitario) || 0)))
 
     return `
-      <div class="item-linha">
-        <div class="item-descricao">${cod}${nome}</div>
-        <div class="item-detalhe">
-          <span>${qtd} un &times; ${unit}</span>
-          <span class="item-total">${tot}</span>
+      <div class="cupom-item">
+        <div class="item-linha1">${cod}${nome}</div>
+        <div class="item-linha2">
+          <span>&nbsp;&nbsp;${qtd} x ${unit}</span>
+          <span class="bold">${tot}</span>
         </div>
       </div>
     `
@@ -112,7 +108,7 @@ export function imprimirRecibo(dadosRecibo = {}) {
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <title>Cupom de Venda #${escaparHtml(vendaId)}</title>
+  <title>Cupom #${escaparHtml(vendaId)}</title>
   <style>
     @page {
       size: 80mm auto;
@@ -126,119 +122,134 @@ export function imprimirRecibo(dadosRecibo = {}) {
     body {
       font-family: 'Courier New', Courier, monospace;
       font-size: 12px;
-      line-height: 1.3;
+      line-height: 1.25;
       color: #000;
       background: #fff;
       width: 80mm;
-      padding: 4mm;
+      padding: 3mm 4mm;
       margin: 0 auto;
     }
     .text-center { text-align: center; }
     .text-right { text-align: right; }
     .bold { font-weight: bold; }
-    .divider {
-      border-top: 1px dashed #000;
-      margin: 6px 0;
+    .divisor {
+      font-size: 11px;
+      line-height: 1;
+      letter-spacing: -0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      margin: 4px 0;
+      user-select: none;
     }
     .header {
       text-align: center;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     .header .loja-nome {
       font-size: 15px;
       font-weight: bold;
       text-transform: uppercase;
-      word-break: break-word;
+      margin-bottom: 2px;
     }
     .header .subtitulo {
-      font-size: 11px;
-      letter-spacing: 0.5px;
-      margin-top: 2px;
-    }
-    .header .aviso-fiscal {
       font-size: 10px;
-      margin-top: 2px;
+      text-transform: uppercase;
     }
-    .info-bloco {
+    .linha-dupla {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+    .tabela-cabecalho {
       font-size: 11px;
       margin-bottom: 4px;
     }
-    .info-linha {
-      display: flex;
-      justify-content: space-between;
-    }
-    .itens-container {
-      margin: 6px 0;
-    }
-    .item-linha {
+    .cupom-item {
       margin-bottom: 5px;
+      font-size: 11px;
       page-break-inside: avoid;
     }
-    .item-descricao {
+    .item-linha1 {
+      font-weight: bold;
       word-break: break-word;
-      font-size: 11px;
-      font-weight: 600;
+      text-transform: uppercase;
     }
-    .item-detalhe {
+    .item-linha2 {
       display: flex;
       justify-content: space-between;
-      font-size: 11px;
-      padding-left: 6px;
+      padding-right: 2px;
     }
-    .totais-bloco {
+    .linha-pontilhada {
+      display: flex;
+      align-items: baseline;
       font-size: 12px;
-      margin: 6px 0;
+      margin: 2px 0;
     }
-    .totais-linha {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 2px;
+    .linha-pontilhada .rotulo {
+      white-space: nowrap;
+    }
+    .linha-pontilhada .pontos {
+      flex-grow: 1;
+      border-bottom: 1px dotted #000;
+      margin: 0 4px;
+      height: 0.9em;
+    }
+    .linha-pontilhada .valor {
+      white-space: nowrap;
+      font-weight: bold;
     }
     .total-destaque {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: bold;
-      border-top: 1px solid #000;
-      border-bottom: 1px solid #000;
-      padding: 4px 0;
-      margin: 4px 0;
+      margin-top: 3px;
     }
-    .pagamento-bloco {
+    .secao-titulo {
+      text-align: center;
+      font-weight: bold;
       font-size: 11px;
-      margin: 6px 0;
+      margin: 2px 0;
+      letter-spacing: 0.5px;
+    }
+    .vendedor-info {
+      font-size: 11px;
+      margin: 4px 0;
+      text-transform: uppercase;
     }
     .footer {
       text-align: center;
       font-size: 11px;
-      margin-top: 10px;
-      padding-top: 6px;
+      margin-top: 8px;
+      padding-top: 4px;
     }
     .btn-bar {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       text-align: center;
       padding-bottom: 8px;
-      border-bottom: 1px solid #ccc;
+      border-bottom: 1px solid #ddd;
     }
     .btn-bar button {
-      padding: 6px 14px;
+      padding: 5px 12px;
       font-size: 12px;
       cursor: pointer;
       margin: 0 4px;
       border-radius: 4px;
       border: 1px solid #333;
-      background: #f0f0f0;
+      background: #f5f5f5;
       font-family: inherit;
     }
     .btn-bar button.primary {
       background: #1976d2;
       color: #fff;
       border-color: #1976d2;
+      font-weight: bold;
     }
     @media print {
       .no-print {
         display: none !important;
       }
       body {
-        padding: 2mm 3mm;
+        padding: 0;
         width: 100%;
       }
     }
@@ -252,70 +263,76 @@ export function imprimirRecibo(dadosRecibo = {}) {
 
   <div class="header">
     <div class="loja-nome">${escaparHtml(lojaNome)}</div>
-    <div class="subtitulo">SISTEMA DE GESTÃO AUTOMOTIVA</div>
-    <div class="aviso-fiscal">CUPOM NÃO FISCAL &mdash; SEM VALOR FISCAL</div>
+    <div class="subtitulo">CUPOM N&Atilde;O FISCAL &mdash; SEM VALOR FISCAL</div>
   </div>
 
-  <div class="divider"></div>
+  <div class="divisor">------------------------------------------</div>
 
-  <div class="info-bloco">
-    <div class="info-linha">
-      <span>VENDA: <strong>#${escaparHtml(vendaId || '-')}</strong></span>
-      <span>${escaparHtml(dataFormatada)}</span>
-    </div>
-    <div class="info-linha">
-      <span>VENDEDOR: ${escaparHtml(vendedorNome)}</span>
-    </div>
+  <div class="linha-dupla">
+    <span class="bold">VENDA No:${escaparHtml(vendaId || '-')}</span>
+    <span>${escaparHtml(dataHoraFormatada)}</span>
+  </div>
+  <div class="linha-dupla">
+    <span>CLIENTE: CONSUMIDOR</span>
   </div>
 
-  <div class="divider"></div>
-  <div class="text-center bold" style="font-size: 11px; margin-bottom: 4px;">ITENS DA VENDA</div>
+  <div class="divisor">------------------------------------------</div>
 
-  <div class="itens-container">
-    ${htmlItens || '<div class="text-center">Nenhum item</div>'}
+  <div class="tabela-cabecalho">
+    <div class="bold">C&oacute;digo&nbsp;&nbsp;&nbsp;&nbsp;Descri&ccedil;&atilde;o</div>
+    <div>--&gt; QTD&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VLR Unit.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Subtotal</div>
   </div>
 
-  <div class="divider"></div>
-
-  <div class="totais-bloco">
-    <div class="totais-linha">
-      <span>SUBTOTAL:</span>
-      <span>${formatarMoeda(subtotalCalculado)}</span>
-    </div>
-    ${temDesconto ? `
-    <div class="totais-linha">
-      <span>DESCONTO${Number(descontoPercentual) > 0 ? ` (${descontoPercentual}%)` : ''}:</span>
-      <span>-${formatarMoeda(descontoValor || (subtotalCalculado * Number(descontoPercentual) / 100))}</span>
-    </div>` : ''}
-    <div class="totais-linha total-destaque">
-      <span>TOTAL GERAL:</span>
-      <span>${formatarMoeda(totalGeral)}</span>
-    </div>
+  <div class="itens-bloco">
+    ${htmlItens || '<div class="text-center">Nenhum item registrado</div>'}
   </div>
 
-  <div class="pagamento-bloco">
-    <div class="totais-linha">
-      <span>FORMA PAGTO:</span>
-      <span class="bold">${escaparHtml(formaPagamento)}${parcelas ? ` (${escaparHtml(parcelas)}x)` : ''}</span>
-    </div>
-    ${valorRecebido !== null && Number(valorRecebido) > 0 ? `
-    <div class="totais-linha">
-      <span>VALOR RECEBIDO:</span>
-      <span>${formatarMoeda(valorRecebido)}</span>
-    </div>` : ''}
-    ${troco !== null && Number(troco) > 0 ? `
-    <div class="totais-linha bold">
-      <span>TROCO:</span>
-      <span>${formatarMoeda(troco)}</span>
-    </div>` : ''}
+  <div class="divisor">------------------------------------------</div>
+
+  ${temDesconto ? `
+  <div class="linha-dupla">
+    <span>Descontos :</span>
+    <span>R$ ${valorDescontoTotal.toFixed(2).replace('.', ',')}</span>
+  </div>` : ''}
+
+  <div class="linha-pontilhada total-destaque">
+    <span class="rotulo">TOTAL A PAGAR :</span>
+    <span class="pontos"></span>
+    <span class="valor">${formatarMoeda(totalGeral)}</span>
   </div>
 
-  <div class="divider"></div>
+  <div class="divisor">------------------------------------------</div>
+  <div class="secao-titulo">FORMA(S) DE PAGAMENTO</div>
+  <div class="divisor">------------------------------------------</div>
+
+  <div class="linha-dupla">
+    <span class="bold">${escaparHtml(formaPagamento)}${parcelas ? ` (${escaparHtml(parcelas)}x)` : ''}</span>
+    <span class="bold">${formatarMoeda(totalGeral)}</span>
+  </div>
+
+  ${valorRecebido !== null && Number(valorRecebido) > 0 ? `
+  <div class="linha-dupla" style="margin-top: 2px;">
+    <span>Valor Recebido:</span>
+    <span>${formatarMoeda(valorRecebido)}</span>
+  </div>` : ''}
+
+  ${troco !== null && Number(troco) > 0 ? `
+  <div class="linha-dupla bold" style="margin-top: 2px;">
+    <span>Troco:</span>
+    <span>${formatarMoeda(troco)}</span>
+  </div>` : ''}
+
+  <div class="divisor">------------------------------------------</div>
+
+  <div class="vendedor-info">
+    <span>Vendedor : <strong>${escaparHtml(vendedorNome)}</strong></span>
+  </div>
+
+  <div class="divisor">------------------------------------------</div>
 
   <div class="footer">
-    <div>Obrigado pela preferência!</div>
+    <div>Obrigado pela prefer&ecirc;ncia!</div>
     <div>Volte sempre!</div>
-    <div style="font-size: 9px; margin-top: 6px; color: #555;">Real Revision PDV</div>
   </div>
 
   <script>
@@ -326,7 +343,6 @@ export function imprimirRecibo(dadosRecibo = {}) {
       }, 250);
     });
     window.onafterprint = function() {
-      // Pequeno delay para garantir que o spool encerrou
       setTimeout(function() {
         window.close();
       }, 500);
