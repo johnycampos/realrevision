@@ -39,6 +39,7 @@ const formUsuario = ref({
   role: 'funcionario',
   loja_id: null,
   ativo: true,
+  estoquista: false,
   menus: [],
   horarios: []
 })
@@ -149,6 +150,7 @@ const abrirModalCriar = () => {
     role: 'funcionario',
     loja_id: isSuperAdmin.value ? (lojas.value[0]?.id || null) : currentUser.value.loja_id,
     ativo: true,
+    estoquista: false,
     menus: [],
     horarios: inicializarHorariosPadrao()
   }
@@ -193,6 +195,7 @@ const abrirModalEditar = async (usuario) => {
       role: dados.role,
       loja_id: dados.loja_id,
       ativo: dados.ativo !== undefined ? dados.ativo : true,
+      estoquista: dados.estoquista !== undefined ? Boolean(dados.estoquista) : false,
       menus: dados.menusIds || [],
       horarios: horariosCompletos
     }
@@ -234,6 +237,7 @@ const salvarUsuario = async () => {
       role: formUsuario.value.role,
       loja_id: formUsuario.value.loja_id,
       ativo: formUsuario.value.ativo,
+      estoquista: Boolean(formUsuario.value.estoquista),
       menus: formUsuario.value.menus,
       horarios: horariosParaSalvar
     }
@@ -374,15 +378,25 @@ onMounted(() => {
               >
                 Gerente da Loja
               </VChip>
-              <VChip
-                v-else
-                color="info"
-                size="small"
-                variant="tonal"
-                prepend-icon="mdi-account"
-              >
-                Funcionário
-              </VChip>
+              <div v-else class="d-flex align-center flex-wrap gap-1">
+                <VChip
+                  color="info"
+                  size="small"
+                  variant="tonal"
+                  prepend-icon="mdi-account"
+                >
+                  Funcionário
+                </VChip>
+                <VChip
+                  v-if="user.estoquista"
+                  color="primary"
+                  size="small"
+                  variant="tonal"
+                  prepend-icon="mdi-warehouse"
+                >
+                  Estoquista
+                </VChip>
+              </div>
             </td>
 
             <td>
@@ -508,6 +522,23 @@ onMounted(() => {
                     label="Usuário Ativo (pode efetuar login no sistema)"
                     color="success"
                   />
+                </VCol>
+
+                <VCol cols="12">
+                  <VSwitch
+                    v-model="formUsuario.estoquista"
+                    label="Estoquista (pode gerenciar estoque, fornecedores e histórico)"
+                    color="primary"
+                  />
+                  <VAlert
+                    v-if="formUsuario.role === 'super_admin' || formUsuario.role === 'admin_loja'"
+                    type="info"
+                    variant="tonal"
+                    density="compact"
+                    class="mt-2"
+                  >
+                    Administradores já possuem acesso pleno ao estoque e fornecedores independente desta opção.
+                  </VAlert>
                 </VCol>
               </VRow>
             </VWindowItem>
