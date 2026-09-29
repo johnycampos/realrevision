@@ -513,9 +513,8 @@ watch(
   () => props.item,
   () => {
     itemEditado.value = { ...props.item }
-    verificarEmprestimo()
   },
-  { deep: true, immediate: true }
+  { deep: true }
 )
 
 watch(
