@@ -1,6 +1,9 @@
 <template>
   <div>
-    <VContainer fluid class="px-2 px-sm-4">
+    <VContainer
+      fluid
+      class="px-2 px-sm-4"
+    >
       <!-- Tabs Mobile para alternar entre Produtos e Carrinho -->
       <VTabs
         v-if="smAndDown"
@@ -10,7 +13,10 @@
         class="mb-4 bg-surface rounded elevation-1"
       >
         <VTab value="produtos">
-          <VIcon icon="mdi-magnify" class="me-1" />
+          <VIcon
+            icon="mdi-magnify"
+            class="me-1"
+          />
           Produtos ({{ products.length }})
         </VTab>
         <VTab value="carrinho">
@@ -57,7 +63,10 @@
               />
               <div v-else>
                 <div class="table-responsive">
-                  <VTable density="compact" class="text-no-wrap">
+                  <VTable
+                    density="compact"
+                    class="text-no-wrap"
+                  >
                     <thead>
                       <tr>
                         <th
@@ -74,7 +83,9 @@
                         v-for="item in paginatedProducts"
                         :key="item.id"
                       >
-                        <td class="font-weight-medium">{{ item.codigo }}</td>
+                        <td class="font-weight-medium">
+                          {{ item.codigo }}
+                        </td>
                         <td>{{ item.nome }}</td>
                         <td class="text-end font-weight-bold">
                           {{ formatCurrency(item.preco_consumidor) }}
@@ -147,13 +158,18 @@
             </VCardTitle>
 
             <VCardText class="pa-3 pa-sm-4">
-              <VList v-if="cartItems.length > 0" class="pa-0">
+              <VList
+                v-if="cartItems.length > 0"
+                class="pa-0"
+              >
                 <VListItem
                   v-for="(item, index) in cartItems"
                   :key="index"
                   class="mb-2 border rounded pa-2"
                 >
-                  <VListItemTitle class="font-weight-medium">{{ item.nome }}</VListItemTitle>
+                  <VListItemTitle class="font-weight-medium">
+                    {{ item.nome }}
+                  </VListItemTitle>
                   <VListItemSubtitle>
                     {{ formatCurrency(item.price) }} × {{ item.quantity }}
                   </VListItemSubtitle>
@@ -196,7 +212,11 @@
                 v-else
                 class="text-center py-8 text-medium-emphasis"
               >
-                <VIcon icon="mdi-cart-outline" size="48" class="mb-2" />
+                <VIcon
+                  icon="mdi-cart-outline"
+                  size="48"
+                  class="mb-2"
+                />
                 <div>Carrinho vazio</div>
                 <VBtn
                   v-if="smAndDown"
@@ -214,16 +234,38 @@
 
             <VCardText class="pa-3 pa-sm-4">
               <!-- Subtotal e Desconto -->
-              <VRow dense class="align-center mb-1">
-                <VCol cols="6" class="text-body-2">Subtotal:</VCol>
-                <VCol cols="6" class="text-end font-weight-bold">
+              <VRow
+                dense
+                class="align-center mb-1"
+              >
+                <VCol
+                  cols="6"
+                  class="text-body-2"
+                >
+                  Subtotal:
+                </VCol>
+                <VCol
+                  cols="6"
+                  class="text-end font-weight-bold"
+                >
                   {{ formatCurrency(calculateSubtotal()) }}
                 </VCol>
               </VRow>
 
-              <VRow dense class="align-center mb-1">
-                <VCol cols="6" class="text-body-2">Desconto (%):</VCol>
-                <VCol cols="6" class="text-end">
+              <VRow
+                dense
+                class="align-center mb-1"
+              >
+                <VCol
+                  cols="6"
+                  class="text-body-2"
+                >
+                  Desconto (%):
+                </VCol>
+                <VCol
+                  cols="6"
+                  class="text-end"
+                >
                   <VTextField
                     v-model="discountValue"
                     variant="outlined"
@@ -240,11 +282,17 @@
 
               <VDivider class="my-2" />
 
-              <VRow dense class="align-center mb-1">
+              <VRow
+                dense
+                class="align-center mb-1"
+              >
                 <VCol cols="6">
                   <span class="text-h6 font-weight-bold">Total:</span>
                 </VCol>
-                <VCol cols="6" class="text-end">
+                <VCol
+                  cols="6"
+                  class="text-end"
+                >
                   <span class="text-h5 font-weight-bold text-primary">
                     {{ formatCurrency(calculateTotal()) }}
                   </span>
@@ -252,11 +300,18 @@
               </VRow>
 
               <!-- Troco -->
-              <VRow v-if="paymentMethod === 'cash' && calculateChange() > 0" dense class="align-center">
+              <VRow
+                v-if="paymentMethod === 'cash' && calculateChange() > 0"
+                dense
+                class="align-center"
+              >
                 <VCol cols="6">
                   <span class="text-subtitle-2">Troco:</span>
                 </VCol>
-                <VCol cols="6" class="text-end">
+                <VCol
+                  cols="6"
+                  class="text-end"
+                >
                   <span class="text-subtitle-1 text-success font-weight-bold">
                     {{ formatCurrency(calculateChange()) }}
                   </span>
@@ -268,7 +323,9 @@
 
             <!-- Formas de Pagamento -->
             <VCardText class="pa-3 pa-sm-4">
-              <h4 class="text-subtitle-2 font-weight-bold mb-2">Forma de Pagamento:</h4>
+              <h4 class="text-subtitle-2 font-weight-bold mb-2">
+                Forma de Pagamento:
+              </h4>
               <VRadioGroup
                 v-model="paymentMethod"
                 :inline="!smAndDown"
@@ -553,6 +610,34 @@ const applyDiscount = () => {
   discountValue.value = Math.min(Math.max(0, discount), 100)
 }
 
+const obterUsuarioLogado = () => {
+  try {
+    return JSON.parse(localStorage.getItem('userData') || '{}')
+  } catch (e) {
+    return {}
+  }
+}
+
+const montarDadosRecibo = (vendaCriada, itensRecibo, valoresVenda) => {
+  const userData = obterUsuarioLogado()
+
+  return {
+    lojaNome: userData.loja_nome || 'REAL REVISION',
+    vendaId: vendaCriada?.id || '',
+    dataVenda: vendaCriada?.data_venda || new Date().toISOString(),
+    vendedorNome: userData.username || userData.fullName || 'Atendente',
+    itens: itensRecibo,
+    subtotal: valoresVenda.subtotal,
+    descontoPercentual: valoresVenda.discountPercentage,
+    descontoValor: valoresVenda.discountAmount,
+    totalGeral: valoresVenda.total,
+    formaPagamento: valoresVenda.formaPagamentoLabel,
+    parcelas: null,
+    valorRecebido: valoresVenda.valorRecebidoNum,
+    troco: valoresVenda.trocoNum,
+  }
+}
+
 const reimprimirUltimoCupom = () => {
   if (ultimaVendaFinalizada.value) {
     imprimirRecibo(ultimaVendaFinalizada.value)
@@ -561,13 +646,7 @@ const reimprimirUltimoCupom = () => {
 
 const finalizeSale = async () => {
   try {
-    const userData = (() => {
-      try {
-        return JSON.parse(localStorage.getItem('userData') || '{}')
-      } catch (e) {
-        return {}
-      }
-    })()
+    const userData = obterUsuarioLogado()
 
     const subtotal = calculateSubtotal()
     const discountPercentage = parseFloat(discountValue.value) || 0
@@ -606,21 +685,7 @@ const finalizeSale = async () => {
     const response = await Vendas.criarVenda(dadosVenda)
     const vendaCriada = response?.data || response
 
-    const dadosRecibo = {
-      lojaNome: userData.loja_nome || 'Real Revision',
-      vendaId: vendaCriada?.id || '',
-      dataVenda: vendaCriada?.data_venda || new Date().toISOString(),
-      vendedorNome: userData.username || userData.fullName || 'Atendente',
-      itens: itensRecibo,
-      subtotal,
-      descontoPercentual: discountPercentage,
-      descontoValor: discountAmount,
-      totalGeral: total,
-      formaPagamento: formaPagamentoLabel,
-      parcelas: null,
-      valorRecebido: valorRecebidoNum,
-      troco: trocoNum,
-    }
+    const dadosRecibo = montarDadosRecibo(vendaCriada, itensRecibo, { subtotal, discountPercentage, discountAmount, total, formaPagamentoLabel, valorRecebidoNum, trocoNum })
 
     // Armazena para permitir reimpressão manual
     ultimaVendaFinalizada.value = dadosRecibo

@@ -25,6 +25,7 @@ const formatarDataHora = dataIso => {
 
 const escaparHtml = str => {
   if (!str) return ''
+  
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -33,65 +34,18 @@ const escaparHtml = str => {
     .replace(/'/g, '&#039;')
 }
 
-/**
- * Imprime um cupom de venda não fiscal formatado para 80mm.
- *
- * @param {Object} dadosRecibo
- * @param {string} dadosRecibo.lojaNome
- * @param {number|string} dadosRecibo.vendaId
- * @param {string} [dadosRecibo.dataVenda]
- * @param {string} [dadosRecibo.vendedorNome]
- * @param {Array} dadosRecibo.itens - [{ codigo, nome, quantidade, precoUnitario, totalItem }]
- * @param {number} [dadosRecibo.subtotal]
- * @param {number} [dadosRecibo.descontoPercentual]
- * @param {number} [dadosRecibo.descontoValor]
- * @param {number} dadosRecibo.totalGeral
- * @param {string} [dadosRecibo.formaPagamento]
- * @param {number|string} [dadosRecibo.parcelas]
- * @param {number} [dadosRecibo.valorRecebido]
- * @param {number} [dadosRecibo.troco]
- */
-export function imprimirRecibo(dadosRecibo = {}) {
-  const {
-    lojaNome = 'REAL REVISION',
-    vendaId = '',
-    dataVenda = null,
-    vendedorNome = 'Atendente',
-    itens = [],
-    subtotal = null,
-    descontoPercentual = 0,
-    descontoValor = 0,
-    totalGeral = 0,
-    formaPagamento = 'Não informada',
-    parcelas = null,
-    valorRecebido = null,
-    troco = null,
-  } = dadosRecibo
-
-  const printWindow = window.open('', '_blank', 'width=380,height=680,menubar=no,toolbar=no,location=no,status=no')
-
-  if (!printWindow) {
-    alert('Não foi possível abrir a janela de impressão. Por favor, verifique se o bloqueador de pop-ups do navegador está ativado.')
-    return
+const gerarHtmlItens = (itens = []) => {
+  if (!itens || itens.length === 0) {
+    return '<div class="text-center">Nenhum item registrado</div>'
   }
 
-  const dataHoraFormatada = formatarDataHora(dataVenda)
-  const subtotalCalculado = subtotal !== null
-    ? Number(subtotal)
-    : itens.reduce((acc, it) => acc + (Number(it.totalItem) || (Number(it.quantidade) * Number(it.precoUnitario)) || 0), 0)
-
-  const valorDescontoTotal = Number(descontoValor) > 0
-    ? Number(descontoValor)
-    : (Number(descontoPercentual) > 0 ? (subtotalCalculado * Number(descontoPercentual) / 100) : 0)
-
-  const temDesconto = valorDescontoTotal > 0
-
-  const htmlItens = itens.map((item, idx) => {
+  return itens.map((item, idx) => {
     const cod = item.codigo ? `${escaparHtml(item.codigo)} - ` : ''
     const nome = escaparHtml(item.nome || `Item #${idx + 1}`)
     const qtd = Number(item.quantidade) || 1
     const unit = formatarMoeda(item.precoUnitario || 0)
-    const tot = formatarMoeda(item.totalItem !== undefined ? item.totalItem : (qtd * (Number(item.precoUnitario) || 0)))
+    const totalCalc = item.totalItem !== undefined ? item.totalItem : (qtd * (Number(item.precoUnitario) || 0))
+    const tot = formatarMoeda(totalCalc)
 
     return `
       <div class="cupom-item">
@@ -103,8 +57,69 @@ export function imprimirRecibo(dadosRecibo = {}) {
       </div>
     `
   }).join('')
+}
 
-  const html = `<!DOCTYPE html>
+const calcularTotalDesconto = (subtotal, descontoValor, descontoPercentual) => {
+  if (Number(descontoValor) > 0) {
+    return Number(descontoValor)
+  }
+  if (Number(descontoPercentual) > 0) {
+    return (subtotal * Number(descontoPercentual)) / 100
+  }
+  
+  return 0
+}
+
+const gerarBlocoPagamento = (formaPagamento, parcelas, totalGeral, valorRecebido, troco) => {
+  const parcelasTexto = parcelas ? ` (${escaparHtml(parcelas)}x)` : ''
+  let html = `
+    <div class="linha-dupla">
+      <span class="bold">${escaparHtml(formaPagamento)}${parcelasTexto}</span>
+      <span class="bold">${formatarMoeda(totalGeral)}</span>
+    </div>
+  `
+
+  if (valorRecebido !== null && Number(valorRecebido) > 0) {
+    html += `
+      <div class="linha-dupla" style="margin-top: 2px;">
+        <span>Valor Recebido:</span>
+        <span>${formatarMoeda(valorRecebido)}</span>
+      </div>
+    `
+  }
+
+  if (troco !== null && Number(troco) > 0) {
+    html += `
+      <div class="linha-dupla bold" style="margin-top: 2px;">
+        <span>Troco:</span>
+        <span>${formatarMoeda(troco)}</span>
+      </div>
+    `
+  }
+
+  return html
+}
+
+const gerarDocumentoHtml = dados => {
+  const {
+    lojaNome,
+    vendaId,
+    dataHoraFormatada,
+    vendedorNome,
+    htmlItens,
+    valorDescontoTotal,
+    totalGeral,
+    blocoPagamento,
+  } = dados
+
+  const blocoDesconto = valorDescontoTotal > 0 ? `
+    <div class="linha-dupla">
+      <span>Descontos :</span>
+      <span>R$ ${valorDescontoTotal.toFixed(2).replace('.', ',')}</span>
+    </div>
+  ` : ''
+
+  return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -284,16 +299,12 @@ export function imprimirRecibo(dadosRecibo = {}) {
   </div>
 
   <div class="itens-bloco">
-    ${htmlItens || '<div class="text-center">Nenhum item registrado</div>'}
+    ${htmlItens}
   </div>
 
   <div class="divisor">------------------------------------------</div>
 
-  ${temDesconto ? `
-  <div class="linha-dupla">
-    <span>Descontos :</span>
-    <span>R$ ${valorDescontoTotal.toFixed(2).replace('.', ',')}</span>
-  </div>` : ''}
+  ${blocoDesconto}
 
   <div class="linha-pontilhada total-destaque">
     <span class="rotulo">TOTAL A PAGAR :</span>
@@ -305,22 +316,7 @@ export function imprimirRecibo(dadosRecibo = {}) {
   <div class="secao-titulo">FORMA(S) DE PAGAMENTO</div>
   <div class="divisor">------------------------------------------</div>
 
-  <div class="linha-dupla">
-    <span class="bold">${escaparHtml(formaPagamento)}${parcelas ? ` (${escaparHtml(parcelas)}x)` : ''}</span>
-    <span class="bold">${formatarMoeda(totalGeral)}</span>
-  </div>
-
-  ${valorRecebido !== null && Number(valorRecebido) > 0 ? `
-  <div class="linha-dupla" style="margin-top: 2px;">
-    <span>Valor Recebido:</span>
-    <span>${formatarMoeda(valorRecebido)}</span>
-  </div>` : ''}
-
-  ${troco !== null && Number(troco) > 0 ? `
-  <div class="linha-dupla bold" style="margin-top: 2px;">
-    <span>Troco:</span>
-    <span>${formatarMoeda(troco)}</span>
-  </div>` : ''}
+  ${blocoPagamento}
 
   <div class="divisor">------------------------------------------</div>
 
@@ -350,6 +346,57 @@ export function imprimirRecibo(dadosRecibo = {}) {
   </script>
 </body>
 </html>`
+}
+
+/**
+ * Imprime um cupom de venda não fiscal formatado para 80mm.
+ *
+ * @param {Object} dadosRecibo
+ */
+export function imprimirRecibo(dadosRecibo = {}) {
+  const printWindow = window.open('', '_blank', 'width=380,height=680,menubar=no,toolbar=no,location=no,status=no')
+
+  if (!printWindow) {
+    alert('Não foi possível abrir a janela de impressão. Por favor, verifique se o bloqueador de pop-ups do navegador está ativado.')
+    
+    return
+  }
+
+  const {
+    lojaNome = 'REAL REVISION',
+    vendaId = '',
+    dataVenda = null,
+    vendedorNome = 'Atendente',
+    itens = [],
+    subtotal = null,
+    descontoPercentual = 0,
+    descontoValor = 0,
+    totalGeral = 0,
+    formaPagamento = 'Não informada',
+    parcelas = null,
+    valorRecebido = null,
+    troco = null,
+  } = dadosRecibo
+
+  const dataHoraFormatada = formatarDataHora(dataVenda)
+  const subtotalCalculado = subtotal !== null
+    ? Number(subtotal)
+    : itens.reduce((acc, it) => acc + (Number(it.totalItem) || (Number(it.quantidade) * Number(it.precoUnitario)) || 0), 0)
+
+  const valorDescontoTotal = calcularTotalDesconto(subtotalCalculado, descontoValor, descontoPercentual)
+  const htmlItens = gerarHtmlItens(itens)
+  const blocoPagamento = gerarBlocoPagamento(formaPagamento, parcelas, totalGeral, valorRecebido, troco)
+
+  const html = gerarDocumentoHtml({
+    lojaNome,
+    vendaId,
+    dataHoraFormatada,
+    vendedorNome,
+    htmlItens,
+    valorDescontoTotal,
+    totalGeral,
+    blocoPagamento,
+  })
 
   printWindow.document.open()
   printWindow.document.write(html)

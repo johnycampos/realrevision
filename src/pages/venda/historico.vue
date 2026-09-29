@@ -49,6 +49,7 @@ const formatarMoeda = valor => {
 const formatarData = dataIso => {
   if (!dataIso) return '-'
   const d = new Date(dataIso)
+  
   return d.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -67,6 +68,7 @@ const totalTransacoes = computed(() => vendas.value.length)
 
 const ticketMedio = computed(() => {
   if (totalTransacoes.value === 0) return 0
+  
   return totalFaturado.value / totalTransacoes.value
 })
 
@@ -427,81 +429,81 @@ onMounted(async () => {
         class="table-responsive"
       >
         <VTable class="text-no-wrap">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>DATA / HORA</th>
-            <th v-if="isSuperAdmin">
-              LOJA
-            </th>
-            <th>VENDEDOR</th>
-            <th>PAGAMENTO</th>
-            <th class="text-end">
-              TOTAL
-            </th>
-            <th class="text-center">
-              AÇÕES
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="v in vendas"
-            :key="v.id"
-          >
-            <td class="font-weight-bold text-primary">
-              #{{ v.id }}
-            </td>
-            <td>
-              {{ formatarData(v.data_venda) }}
-            </td>
-            <td v-if="isSuperAdmin">
-              <VChip
-                size="small"
-                variant="outlined"
-              >
-                {{ v.loja_nome || `Loja ${v.loja_id}` }}
-              </VChip>
-            </td>
-            <td>
-              {{ v.vendedor_nome || '-' }}
-            </td>
-            <td>
-              <VChip
-                color="secondary"
-                size="small"
-                variant="tonal"
-              >
-                {{ v.forma_pagamento }}
-                <span v-if="v.parcelas && v.parcelas > 1"> ({{ v.parcelas }}x)</span>
-              </VChip>
-            </td>
-            <td class="text-end font-weight-bold">
-              {{ formatarMoeda(v.valor_total) }}
-            </td>
-            <td class="text-center">
-              <VBtn
-                variant="tonal"
-                color="primary"
-                size="small"
-                prepend-icon="mdi-eye-outline"
-                class="me-2"
-                @click="abrirDetalhes(v)"
-              >
-                Ver Itens
-              </VBtn>
-              <VBtn
-                variant="tonal"
-                color="secondary"
-                size="small"
-                icon="mdi-printer"
-                title="Imprimir Cupom Não Fiscal"
-                @click="imprimirCupomVenda(v)"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </VTable>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>DATA / HORA</th>
+              <th v-if="isSuperAdmin">
+                LOJA
+              </th>
+              <th>VENDEDOR</th>
+              <th>PAGAMENTO</th>
+              <th class="text-end">
+                TOTAL
+              </th>
+              <th class="text-center">
+                AÇÕES
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="v in vendas"
+              :key="v.id"
+            >
+              <td class="font-weight-bold text-primary">
+                #{{ v.id }}
+              </td>
+              <td>
+                {{ formatarData(v.data_venda) }}
+              </td>
+              <td v-if="isSuperAdmin">
+                <VChip
+                  size="small"
+                  variant="outlined"
+                >
+                  {{ v.loja_nome || `Loja ${v.loja_id}` }}
+                </VChip>
+              </td>
+              <td>
+                {{ v.vendedor_nome || '-' }}
+              </td>
+              <td>
+                <VChip
+                  color="secondary"
+                  size="small"
+                  variant="tonal"
+                >
+                  {{ v.forma_pagamento }}
+                  <span v-if="v.parcelas && v.parcelas > 1"> ({{ v.parcelas }}x)</span>
+                </VChip>
+              </td>
+              <td class="text-end font-weight-bold">
+                {{ formatarMoeda(v.valor_total) }}
+              </td>
+              <td class="text-center">
+                <VBtn
+                  variant="tonal"
+                  color="primary"
+                  size="small"
+                  prepend-icon="mdi-eye-outline"
+                  class="me-2"
+                  @click="abrirDetalhes(v)"
+                >
+                  Ver Itens
+                </VBtn>
+                <VBtn
+                  variant="tonal"
+                  color="secondary"
+                  size="small"
+                  icon="mdi-printer"
+                  title="Imprimir Cupom Não Fiscal"
+                  @click="imprimirCupomVenda(v)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </VTable>
       </div>
 
       <VCardText
@@ -591,48 +593,48 @@ onMounted(async () => {
 
           <div class="table-responsive">
             <VTable density="compact">
-            <thead>
-              <tr>
-                <th>PRODUTO / CÓDIGO</th>
-                <th class="text-center">
-                  QTD
-                </th>
-                <th class="text-end">
-                  PREÇO UNIT.
-                </th>
-                <th class="text-end">
-                  TOTAL
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(item, idx) in (vendaSelecionada.itens || [])"
-                :key="idx"
-              >
-                <td>
-                  <div class="font-weight-medium">
-                    {{ item.nome_item || `Item #${item.item_id}` }}
-                  </div>
-                  <div
-                    v-if="item.codigo_item"
-                    class="text-caption text-medium-emphasis"
-                  >
-                    Cód: {{ item.codigo_item }}
-                  </div>
-                </td>
-                <td class="text-center">
-                  {{ item.quantidade }}
-                </td>
-                <td class="text-end">
-                  {{ formatarMoeda(item.preco_unitario) }}
-                </td>
-                <td class="text-end font-weight-medium">
-                  {{ formatarMoeda(item.valor_total_item) }}
-                </td>
-              </tr>
-            </tbody>
-          </VTable>
+              <thead>
+                <tr>
+                  <th>PRODUTO / CÓDIGO</th>
+                  <th class="text-center">
+                    QTD
+                  </th>
+                  <th class="text-end">
+                    PREÇO UNIT.
+                  </th>
+                  <th class="text-end">
+                    TOTAL
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(item, idx) in (vendaSelecionada.itens || [])"
+                  :key="idx"
+                >
+                  <td>
+                    <div class="font-weight-medium">
+                      {{ item.nome_item || `Item #${item.item_id}` }}
+                    </div>
+                    <div
+                      v-if="item.codigo_item"
+                      class="text-caption text-medium-emphasis"
+                    >
+                      Cód: {{ item.codigo_item }}
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    {{ item.quantidade }}
+                  </td>
+                  <td class="text-end">
+                    {{ formatarMoeda(item.preco_unitario) }}
+                  </td>
+                  <td class="text-end font-weight-medium">
+                    {{ formatarMoeda(item.valor_total_item) }}
+                  </td>
+                </tr>
+              </tbody>
+            </VTable>
           </div>
         </VCardText>
 
