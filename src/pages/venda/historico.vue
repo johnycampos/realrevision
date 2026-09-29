@@ -8,6 +8,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import vendasApi from '@/server/Vendas'
 import usuariosApi from '@/server/Usuarios'
+import { imprimirRecibo } from '@/utils/imprimirRecibo'
 
 const router = useRouter()
 
@@ -119,6 +120,47 @@ const carregarLojas = async () => {
 const abrirDetalhes = venda => {
   vendaSelecionada.value = venda
   dialogDetalhes.value = true
+}
+
+const imprimirCupomVenda = venda => {
+  if (!venda) return
+
+  let itensLista = []
+  if (Array.isArray(venda.itens)) {
+    itensLista = venda.itens
+  } else if (typeof venda.itens === 'string') {
+    try {
+      itensLista = JSON.parse(venda.itens)
+    } catch (e) {
+      itensLista = []
+    }
+  }
+
+  const itensRecibo = itensLista.map((item, idx) => ({
+    codigo: item.codigo_item || '',
+    nome: item.nome_item || `Item #${item.item_id || (idx + 1)}`,
+    quantidade: item.quantidade,
+    precoUnitario: item.preco_unitario,
+    totalItem: item.valor_total_item,
+  }))
+
+  const dadosRecibo = {
+    lojaNome: venda.loja_nome || `Loja ${venda.loja_id}`,
+    vendaId: venda.id,
+    dataVenda: venda.data_venda,
+    vendedorNome: venda.vendedor_nome || 'Atendente',
+    itens: itensRecibo,
+    subtotal: parseFloat(venda.valor_total || 0),
+    descontoPercentual: 0,
+    descontoValor: 0,
+    totalGeral: parseFloat(venda.valor_total || 0),
+    formaPagamento: venda.forma_pagamento || 'Não informada',
+    parcelas: venda.parcelas,
+    valorRecebido: null,
+    troco: null,
+  }
+
+  imprimirRecibo(dadosRecibo)
 }
 
 const irParaPdv = () => {
@@ -443,10 +485,19 @@ onMounted(async () => {
                 color="primary"
                 size="small"
                 prepend-icon="mdi-eye-outline"
+                class="me-2"
                 @click="abrirDetalhes(v)"
               >
                 Ver Itens
               </VBtn>
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                size="small"
+                icon="mdi-printer"
+                title="Imprimir Cupom Não Fiscal"
+                @click="imprimirCupomVenda(v)"
+              />
             </td>
           </tr>
         </tbody>
@@ -542,7 +593,7 @@ onMounted(async () => {
             <VTable density="compact">
             <thead>
               <tr>
-                <th>ITEM ID</th>
+                <th>PRODUTO / CÓDIGO</th>
                 <th class="text-center">
                   QTD
                 </th>
@@ -559,7 +610,17 @@ onMounted(async () => {
                 v-for="(item, idx) in (vendaSelecionada.itens || [])"
                 :key="idx"
               >
-                <td>Item #{{ item.item_id }}</td>
+                <td>
+                  <div class="font-weight-medium">
+                    {{ item.nome_item || `Item #${item.item_id}` }}
+                  </div>
+                  <div
+                    v-if="item.codigo_item"
+                    class="text-caption text-medium-emphasis"
+                  >
+                    Cód: {{ item.codigo_item }}
+                  </div>
+                </td>
                 <td class="text-center">
                   {{ item.quantidade }}
                 </td>
@@ -575,7 +636,15 @@ onMounted(async () => {
           </div>
         </VCardText>
 
-        <VCardActions class="justify-end">
+        <VCardActions class="justify-space-between pa-4">
+          <VBtn
+            variant="elevated"
+            color="primary"
+            prepend-icon="mdi-printer"
+            @click="imprimirCupomVenda(vendaSelecionada)"
+          >
+            Imprimir Cupom
+          </VBtn>
           <VBtn
             variant="tonal"
             color="secondary"
