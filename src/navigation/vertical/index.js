@@ -4,12 +4,14 @@ import vendas from './vendas'
 import emprestimos from './emprestimos'
 import configuracoes from './configuracoes'
 import relatorios from './relatorios'
+import comissoes from './comissoes'
 
 export const allNavItems = [
   ...crm,
   ...estoque,
   ...vendas,
   ...emprestimos,
+  ...comissoes,
   ...configuracoes,
   ...relatorios,
 ]

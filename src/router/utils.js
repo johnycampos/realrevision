@@ -33,6 +33,7 @@ export const MENU_TO_ROUTE = {
   emprestimos: 'emprestimos',
   configuracoes: 'configuracoes',
   relatorios: 'relatorios',
+  comissoes: 'comissoes',
 }
 
 /**
@@ -75,6 +76,7 @@ export const getMenuKeyForRoute = route => {
   if (path.startsWith('/estoque') || name.startsWith('estoque')) return 'estoque'
   if (path.startsWith('/venda') || name.startsWith('venda') || name.startsWith('ponto')) return 'vendas'
   if (path.startsWith('/emprestimos') || name.startsWith('emprestimos')) return 'emprestimos'
+  if (path.startsWith('/comissoes') || name.startsWith('comissoes')) return 'comissoes'
   if (path.startsWith('/dashboards') || name.startsWith('dashboards') || path.startsWith('/crm') || name.startsWith('crm')) return 'dashboard'
   if (path.includes('account-settings') || path.startsWith('/configuracoes') || name.includes('account-settings') || name.startsWith('configuracoes')) return 'configuracoes'
   if (path.startsWith('/charts') || name.startsWith('charts') || path.startsWith('/relatorios') || name.startsWith('relatorios')) return 'relatorios'
