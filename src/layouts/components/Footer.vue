@@ -1,5 +1,11 @@
+<script setup>
+/* global __APP_VERSION__, __BUILD_TIME__ */
+const appVersion = __APP_VERSION__
+const buildTime = __BUILD_TIME__
+</script>
+
 <template>
-  <div class="h-100 d-flex align-center justify-space-between">
+  <div class="h-100 d-flex flex-wrap align-center justify-space-between gap-2">
     <!-- 👉 Footer: left content -->
     <span class="d-flex align-center">
       &copy;
@@ -22,6 +28,10 @@
       <a>Johny
         Freitas</a>
     </span>
+    <span
+      class="text-caption text-medium-emphasis"
+      :title="`Build ${buildTime}`"
+    >v{{ appVersion }} • build {{ buildTime.slice(0, 16).replace('T', ' ') }} UTC</span>
     <!--
       👉 Footer: right content 
       <span class="d-md-flex gap-x-4 text-primary d-none">

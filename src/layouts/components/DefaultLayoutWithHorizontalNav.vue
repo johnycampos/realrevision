@@ -74,6 +74,5 @@ injectSkinClasses()
     </template>
 
     <!-- 👉 Customizer -->
-    <TheCustomizer />
   </HorizontalNavLayout>
 </template>

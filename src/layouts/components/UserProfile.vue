@@ -5,6 +5,18 @@ import { useAppAbility } from '@/plugins/casl/useAppAbility'
 const router = useRouter()
 const ability = useAppAbility()
 const userData = JSON.parse(localStorage.getItem('userData') || 'null')
+const avatarImages = import.meta.glob('@/assets/images/avatars/avatar-*.png', { eager: true, import: 'default' })
+const avatars = Object.keys(avatarImages)
+  .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+  .map(path => avatarImages[path])
+const userAvatar = computed(() => {
+  if (userData?.avatar) return userData.avatar
+  const userId = Number(userData?.id)
+  const fallbackHash = [...(userData?.username || '')].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) >>> 0, 0)
+  const index = Number.isInteger(userId) ? Math.abs(userId) : fallbackHash
+
+  return avatars[index % avatars.length]
+})
 const logout = () => {
 
   // Remove "userData" from localStorage
@@ -39,12 +51,8 @@ const avatarBadgeProps = {
       variant="tonal"
     >
       <VImg
-        v-if="userData && userData.avatar"
-        :src="userData.avatar"
-      />
-      <VIcon
-        v-else
-        icon="mdi-account-outline"
+        :src="userAvatar"
+        :alt="userData?.username || 'Usuário'"
       />
 
       <!-- SECTION Menu -->
@@ -66,12 +74,8 @@ const avatarBadgeProps = {
                     variant="tonal"
                   >
                     <VImg
-                      v-if="userData && userData.avatar"
-                      :src="userData.avatar"
-                    />
-                    <VIcon
-                      v-else
-                      icon="mdi-account-outline"
+                      :src="userAvatar"
+                      :alt="userData?.username || 'Usuário'"
                     />
                   </VAvatar>
                 </VBadge>
@@ -79,7 +83,7 @@ const avatarBadgeProps = {
             </template>
 
             <VListItemTitle class="font-weight-semibold">
-              {{ userData.fullName }}
+              {{ userData?.fullName || userData?.username }}
             </VListItemTitle>
             <VListItemSubtitle class="text-disabled">
               {{ userData.role }}

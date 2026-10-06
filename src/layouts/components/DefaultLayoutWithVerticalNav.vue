@@ -106,6 +106,5 @@ injectSkinClasses()
     </template>
 
     <!-- 👉 Customizer -->
-    <TheCustomizer />
   </VerticalNavLayout>
 </template>

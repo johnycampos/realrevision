@@ -26,13 +26,25 @@ const errors = ref({
 })
 const refVForm = ref()
 const isFlatSnackbarVisible = ref(false)
-const email = ref('johny')
-const password = ref('teste')
+const email = ref('')
+const password = ref('')
 const rememberMe = ref(false)
+
+// Salvar login guarda apenas o identificador, nunca a senha.
+onMounted(() => {
+  const savedEmail = localStorage.getItem('savedLoginEmail')
+  if (savedEmail) {
+    email.value = savedEmail
+    rememberMe.value = true
+  }
+})
+
 const login = () => {
   api.logar(email.value, password.value).then(r => {
-
-    console.log(r)
+    if (rememberMe.value)
+      localStorage.setItem('savedLoginEmail', email.value)
+    else
+      localStorage.removeItem('savedLoginEmail')
 
     const {accessToken, userData, userAbilities, menusChaves, menus} = r.data
     localStorage.setItem('userAbilities', JSON.stringify(userAbilities))

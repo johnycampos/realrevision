@@ -12,15 +12,15 @@ const authThemeMask = useGenerateImageVariant(miscMaskLight, miscMaskDark)
   <div class="misc-wrapper">
     <ErrorHeader
       error-code="404"
-      error-title="Page Not Found ⚠️"
-      error-description="We couldn't find the page you are looking for."
+      error-title="Página Não Encontrada ⚠️"
+      error-description="Não conseguimos encontrar a página que você está procurando."
     />
 
     <!-- 👉 Image -->
     <div class="misc-avatar w-100 text-center">
       <VImg
         :src="misc404"
-        alt="Coming Soon"
+        alt="Página não encontrada"
         :max-width="800"
         class="mx-auto"
       />
@@ -28,7 +28,7 @@ const authThemeMask = useGenerateImageVariant(miscMaskLight, miscMaskDark)
         to="/"
         class="mt-10"
       >
-        Back to Home
+        Voltar para o Início
       </VBtn>
     </div>
 
