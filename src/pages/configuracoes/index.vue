@@ -65,6 +65,16 @@ const inicializarHorariosPadrao = () => {
   }))
 }
 
+// Libera login em todos os 7 dias da semana, 00:00 às 23:59
+const liberarTodosOsHorarios = () => {
+  formUsuario.value.horarios = formUsuario.value.horarios.map(h => ({
+    ...h,
+    ativo: true,
+    hora_inicio: '00:00',
+    hora_fim: '23:59'
+  }))
+}
+
 // Opções de Roles disponíveis no select
 const rolesDisponiveis = computed(() => {
   const opcoes = [
@@ -678,6 +688,21 @@ onMounted(() => {
                 <p class="text-body-2 text-medium-emphasis mb-4">
                   Defina os intervalos permitidos para login de funcionários. Sem horário ativo cadastrado, o login será bloqueado (fail-closed).
                 </p>
+
+                <div
+                  v-if="formUsuario.role === 'funcionario'"
+                  class="d-flex justify-end mb-2"
+                >
+                  <VBtn
+                    size="small"
+                    variant="tonal"
+                    color="success"
+                    prepend-icon="mdi-clock-check-outline"
+                    @click="liberarTodosOsHorarios"
+                  >
+                    Liberar Todos os Horários
+                  </VBtn>
+                </div>
 
                 <div class="table-responsive">
                   <VTable

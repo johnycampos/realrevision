@@ -142,11 +142,11 @@ const itensFiltrados = computed(() => {
   if (query) {
     filtered = itens.value.filter(item => {
       return (
-        item.codigo.toLowerCase().includes(query) ||
-        item.nome.toLowerCase().includes(query) ||
-        item.nome_curto.toLowerCase().includes(query) ||
-        item.grupo_nome.toLowerCase().includes(query) ||
-        item.subgrupo_nome.toLowerCase().includes(query) ||
+        (item.codigo || '').toLowerCase().includes(query) ||
+        (item.nome || '').toLowerCase().includes(query) ||
+        (item.nome_curto || '').toLowerCase().includes(query) ||
+        (item.grupo_nome || '').toLowerCase().includes(query) ||
+        (item.subgrupo_nome || '').toLowerCase().includes(query) ||
         (item.observacoes && item.observacoes.toLowerCase().includes(query))
       )
     })
@@ -356,17 +356,7 @@ watch(searchQuery, () => {
                 >
                   <!-- 👉 Código -->
                   <td>
-                    <div class="d-flex align-center">
-                      <VAvatar
-                        variant="tonal"
-                        color="primary"
-                        class="me-3"
-                        size="34"
-                      >
-                        <span>{{ item.codigo.substring(0, 2) }}</span>
-                      </VAvatar>
-                      <span class="text-medium-emphasis">{{ item.codigo }}</span>
-                    </div>
+                    <span class="text-medium-emphasis font-weight-medium">{{ item.codigo }}</span>
                   </td>
 
                   <!-- 👉 Nome -->

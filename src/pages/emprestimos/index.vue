@@ -19,13 +19,29 @@ const currentUser = computed(() => {
 const role = computed(() => currentUser.value.role || 'funcionario')
 const isSuperAdmin = computed(() => role.value === 'super_admin')
 const isAdminLoja = computed(() => role.value === 'admin_loja')
-const isAdminOrSuper = computed(() => isSuperAdmin.value || isAdminLoja.value)
+const isEstoquista = computed(() => currentUser.value.estoquista === true)
+// Gerente da loja, super_admin, ou funcionário com a flag "estoquista" podem aprovar/rejeitar/pagar empréstimos
+const isAdminOrSuper = computed(() => isSuperAdmin.value || isAdminLoja.value || isEstoquista.value)
 
 // Estado da Tela
 const activeTab = ref('estoque-outras-lojas')
 const loading = ref(false)
 const mensagemSucesso = ref('')
 const mensagemErro = ref('')
+
+// Paginação genérica (client-side) reutilizada pelas 4 abas
+const ITENS_POR_PAGINA = 15
+const paginaEstoqueOutrasLojas = ref(1)
+const paginaMeusPedidos = ref(1)
+const paginaPendentesAprovacao = ref(1)
+const paginaTodosEmprestimos = ref(1)
+
+const paginar = (lista, pagina) => {
+  const start = (pagina - 1) * ITENS_POR_PAGINA
+  return lista.slice(start, start + ITENS_POR_PAGINA)
+}
+
+const totalPaginas = lista => Math.max(1, Math.ceil(lista.length / ITENS_POR_PAGINA))
 
 // ==========================================
 // ABA 1: Estoque de Outras Lojas
@@ -38,9 +54,12 @@ const quantidadeSolicitada = ref(1)
 const observacoesSolicitacao = ref('')
 const enviandoSolicitacao = ref(false)
 
+const itensOutrasLojasPaginados = computed(() => paginar(itensOutrasLojas.value, paginaEstoqueOutrasLojas.value))
+
 const carregarEstoqueOutrasLojas = async () => {
   try {
     loading.value = true
+    paginaEstoqueOutrasLojas.value = 1
     const response = await emprestimosApi.buscarEstoqueOutrasLojas(buscaOutrasLojas.value)
     itensOutrasLojas.value = response.data || []
   } catch (err) {
@@ -93,14 +112,17 @@ const confirmarSolicitacao = async () => {
   }
 }
 
+const isAdminLojaOrEstoquista = computed(() => isAdminLoja.value || isEstoquista.value)
 // ==========================================
 // ABA 2: Meus Pedidos
 // ==========================================
 const meusPedidos = ref([])
+const meusPedidosPaginados = computed(() => paginar(meusPedidos.value, paginaMeusPedidos.value))
 const carregarMeusPedidos = async () => {
   try {
     loading.value = true
-    const params = { como_destino: isAdminLoja.value ? 'true' : undefined }
+    paginaMeusPedidos.value = 1
+    const params = { como_destino: isAdminLojaOrEstoquista.value ? 'true' : undefined }
     const response = await emprestimosApi.listar(params)
     meusPedidos.value = response.data || []
   } catch (err) {
@@ -114,6 +136,7 @@ const carregarMeusPedidos = async () => {
 // ABA 3: Aprovações Pendentes (Admin/Super)
 // ==========================================
 const pendentesAprovacao = ref([])
+const pendentesAprovacaoPaginados = computed(() => paginar(pendentesAprovacao.value, paginaPendentesAprovacao.value))
 const dialogAprovar = ref(false)
 const dialogRejeitar = ref(false)
 const itemEmAprovacao = ref(null)
@@ -124,9 +147,10 @@ const carregarPendentesAprovacao = async () => {
   if (!isAdminOrSuper.value) return
   try {
     loading.value = true
+    paginaPendentesAprovacao.value = 1
     const params = {
       status: 'solicitado',
-      como_origem: isAdminLoja.value ? 'true' : undefined,
+      como_origem: isAdminLojaOrEstoquista.value ? 'true' : undefined,
     }
     const response = await emprestimosApi.listar(params)
     pendentesAprovacao.value = response.data || []
@@ -188,6 +212,7 @@ const confirmarRejeicao = async () => {
 // ABA 4: Todos os Empréstimos & Pagamento (Admin/Super)
 // ==========================================
 const todosEmprestimos = ref([])
+const todosEmprestimosPaginados = computed(() => paginar(todosEmprestimos.value, paginaTodosEmprestimos.value))
 const filtroStatus = ref('')
 const dialogPagamento = ref(false)
 const itemEmPagamento = ref(null)
@@ -199,6 +224,7 @@ const carregarTodosEmprestimos = async () => {
   if (!isAdminOrSuper.value) return
   try {
     loading.value = true
+    paginaTodosEmprestimos.value = 1
     const params = filtroStatus.value ? { status: filtroStatus.value } : {}
     const response = await emprestimosApi.listar(params)
     todosEmprestimos.value = response.data || []
@@ -471,7 +497,7 @@ onMounted(() => {
                     </td>
                   </tr>
                   <tr
-                    v-for="item in itensOutrasLojas"
+                    v-for="item in itensOutrasLojasPaginados"
                     :key="item.id"
                   >
                     <td>
@@ -522,6 +548,18 @@ onMounted(() => {
                   </tr>
                 </tbody>
               </VTable>
+            </div>
+
+            <div
+              v-if="itensOutrasLojas.length > ITENS_POR_PAGINA"
+              class="d-flex justify-center mt-4"
+            >
+              <VPagination
+                v-model="paginaEstoqueOutrasLojas"
+                :length="totalPaginas(itensOutrasLojas)"
+                :total-visible="5"
+                size="small"
+              />
             </div>
           </VWindowItem>
 
@@ -580,7 +618,7 @@ onMounted(() => {
                     </td>
                   </tr>
                   <tr
-                    v-for="pedido in meusPedidos"
+                    v-for="pedido in meusPedidosPaginados"
                     :key="pedido.id"
                   >
                     <td>#{{ pedido.id }}</td>
@@ -645,6 +683,18 @@ onMounted(() => {
                   </tr>
                 </tbody>
               </VTable>
+            </div>
+
+            <div
+              v-if="meusPedidos.length > ITENS_POR_PAGINA"
+              class="d-flex justify-center mt-4"
+            >
+              <VPagination
+                v-model="paginaMeusPedidos"
+                :length="totalPaginas(meusPedidos)"
+                :total-visible="5"
+                size="small"
+              />
             </div>
           </VWindowItem>
 
@@ -713,7 +763,7 @@ onMounted(() => {
                     </td>
                   </tr>
                   <tr
-                    v-for="ped in pendentesAprovacao"
+                    v-for="ped in pendentesAprovacaoPaginados"
                     :key="ped.id"
                   >
                     <td>#{{ ped.id }}</td>
@@ -762,6 +812,18 @@ onMounted(() => {
                   </tr>
                 </tbody>
               </VTable>
+            </div>
+
+            <div
+              v-if="pendentesAprovacao.length > ITENS_POR_PAGINA"
+              class="d-flex justify-center mt-4"
+            >
+              <VPagination
+                v-model="paginaPendentesAprovacao"
+                :length="totalPaginas(pendentesAprovacao)"
+                :total-visible="5"
+                size="small"
+              />
             </div>
           </VWindowItem>
 
@@ -847,7 +909,7 @@ onMounted(() => {
                     </td>
                   </tr>
                   <tr
-                    v-for="item in todosEmprestimos"
+                    v-for="item in todosEmprestimosPaginados"
                     :key="item.id"
                   >
                     <td>#{{ item.id }}</td>
@@ -924,6 +986,18 @@ onMounted(() => {
                   </tr>
                 </tbody>
               </VTable>
+            </div>
+
+            <div
+              v-if="todosEmprestimos.length > ITENS_POR_PAGINA"
+              class="d-flex justify-center mt-4"
+            >
+              <VPagination
+                v-model="paginaTodosEmprestimos"
+                :length="totalPaginas(todosEmprestimos)"
+                :total-visible="5"
+                size="small"
+              />
             </div>
           </VWindowItem>
         </VWindow>
