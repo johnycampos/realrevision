@@ -10,7 +10,8 @@ const avatars = Object.keys(avatarImages)
   .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
   .map(path => avatarImages[path])
 const userAvatar = computed(() => {
-  if (userData?.avatar) return userData.avatar
+  // O login legado retorna um caminho de desenvolvimento fixo, inválido no build.
+  if (userData?.avatar && !userData.avatar.startsWith('/src/')) return userData.avatar
   const userId = Number(userData?.id)
   const fallbackHash = [...(userData?.username || '')].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) >>> 0, 0)
   const index = Number.isInteger(userId) ? Math.abs(userId) : fallbackHash
