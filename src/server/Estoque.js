@@ -1,8 +1,9 @@
 import { API } from './ApiConfig'
 
 export default {
-  listarItens: () => {
-    return API.get('/api/itens')
+  listarItens: (loja_id = null) => {
+    const params = loja_id ? { loja_id } : {}
+    return API.get('/api/itens', { params })
       .then(response => response)
       .catch(error => {
         console.error('Erro ao listar itens:', error)

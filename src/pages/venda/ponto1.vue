@@ -331,13 +331,14 @@
                 :inline="!smAndDown"
                 density="compact"
                 hide-details
+                class="payment-method-group"
               >
                 <VRadio
                   v-for="method in paymentMethods"
                   :key="method.value"
                   :label="method.label"
                   :value="method.value"
-                  class="me-3"
+                  class="me-3 mb-1"
                 />
               </VRadioGroup>
 
@@ -360,12 +361,12 @@
 
             <VDivider />
 
-            <VCardActions class="pa-3 pa-sm-4 d-flex flex-column flex-sm-row gap-2">
+            <VCardActions class="pa-3 pa-sm-4 d-flex flex-wrap flex-sm-row gap-2">
               <VBtn
                 color="error"
                 variant="outlined"
                 :disabled="cartItems.length === 0"
-                :block="smAndDown"
+                class="flex-grow-1 flex-sm-grow-0"
                 @click="clearCart"
               >
                 Limpar Carrinho
@@ -375,7 +376,7 @@
                 variant="tonal"
                 prepend-icon="mdi-printer"
                 :disabled="!ultimaVendaFinalizada"
-                :block="smAndDown"
+                class="flex-grow-1 flex-sm-grow-0"
                 title="Reimprimir cupom da última venda"
                 @click="reimprimirUltimoCupom"
               >
@@ -386,7 +387,7 @@
                 variant="elevated"
                 size="large"
                 :disabled="!canFinalize"
-                :block="smAndDown"
+                class="flex-grow-1 flex-sm-grow-0"
                 @click="finalizeSale"
               >
                 Finalizar Venda
@@ -752,5 +753,10 @@ onMounted(() => {
   border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 8px;
   margin-block-end: 8px;
+}
+
+.payment-method-group :deep(.v-selection-control-group) {
+  flex-wrap: wrap;
+  row-gap: 4px;
 }
 </style>

@@ -5,6 +5,7 @@ import { podeGerenciarEstoque } from '@/utils/permissoes'
 
 import estoque from '@/server/Estoque'
 import emprestimosApi from '@/server/Emprestimos'
+import usuariosApi from '@/server/Usuarios'
 import Dialog from './dialog.vue'
 import DialogCriar from './dialogCriar.vue'
 import AbaFornecedores from './AbaFornecedores.vue'
@@ -12,6 +13,34 @@ import AbaLogsEstoque from './AbaLogsEstoque.vue'
 
 const abaAtiva = ref('itens')
 const temPermissao = computed(() => podeGerenciarEstoque())
+
+// Filtro de loja (apenas super_admin, que por padrão vê o estoque consolidado das 3 lojas)
+const currentUser = (() => {
+  try {
+    return JSON.parse(localStorage.getItem('userData') || '{}')
+  } catch (e) {
+    return {}
+  }
+})()
+const isSuperAdmin = computed(() => currentUser.role === 'super_admin')
+const lojas = ref([])
+const lojaSelecionada = ref(null)
+const isLoadingLojas = ref(false)
+
+const carregarLojas = async () => {
+  if (!isSuperAdmin.value) return
+  isLoadingLojas.value = true
+  try {
+    const res = await usuariosApi.listarLojas()
+    if (res?.data) {
+      lojas.value = res.data
+    }
+  } catch (e) {
+    console.error('Erro ao carregar lojas:', e)
+  } finally {
+    isLoadingLojas.value = false
+  }
+}
 
 const searchQuery = ref('')
 const rowPerPage = ref(10)
@@ -68,7 +97,8 @@ const ordenarItens = itens => {
 const fetchItens = async () => {
   try {
     isLoading.value = true
-    const response = await estoque.listarItens()
+    const lojaFiltro = isSuperAdmin.value ? lojaSelecionada.value : null
+    const response = await estoque.listarItens(lojaFiltro)
     itens.value = response.data
     totalItens.value = response.data.length
     totalPage.value = Math.ceil(totalItens.value / rowPerPage.value)
@@ -94,6 +124,13 @@ const fetchItens = async () => {
 
 // Carrega os itens quando o componente é montado
 onMounted(() => {
+  carregarLojas()
+  fetchItens()
+})
+
+// Ao trocar a loja selecionada (super_admin), recarrega os itens e volta para a página 1
+watch(lojaSelecionada, () => {
+  currentPage.value = 1
   fetchItens()
 })
 
@@ -217,6 +254,27 @@ watch(searchQuery, () => {
                   placeholder="Pesquise por código, nome, grupo ou observações"
                   clearable
                   clear-icon="mdi-close"
+                />
+              </VCol>
+
+              <!-- 👉 Filtro de Loja (apenas super_admin) -->
+              <VCol
+                v-if="isSuperAdmin"
+                cols="12"
+                sm="4"
+                md="3"
+              >
+                <VSelect
+                  v-model="lojaSelecionada"
+                  :items="lojas"
+                  item-title="nome"
+                  item-value="id"
+                  label="Filtrar por Loja"
+                  placeholder="Todas as Lojas"
+                  density="compact"
+                  clearable
+                  :loading="isLoadingLojas"
+                  prepend-inner-icon="mdi-store-outline"
                 />
               </VCol>
             </VRow>
