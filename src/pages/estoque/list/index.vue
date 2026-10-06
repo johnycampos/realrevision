@@ -266,11 +266,10 @@ watch(searchQuery, () => {
               >
                 <VSelect
                   v-model="lojaSelecionada"
-                  :items="lojas"
+                  :items="[{ id: null, nome: 'Todas as Lojas' }, ...lojas]"
                   item-title="nome"
                   item-value="id"
                   label="Filtrar por Loja"
-                  placeholder="Todas as Lojas"
                   density="compact"
                   clearable
                   :loading="isLoadingLojas"

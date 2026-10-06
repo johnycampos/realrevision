@@ -45,6 +45,11 @@ const resumoConsolidado = ref({
 
 const dadosPorLoja = ref([])
 const itensEstoqueBaixo = ref([])
+const ITENS_POR_PAGINA = 10
+const paginaEstoqueBaixo = ref(1)
+const paginar = (lista, pagina) => lista.slice((pagina - 1) * ITENS_POR_PAGINA, pagina * ITENS_POR_PAGINA)
+const totalPaginas = lista => Math.max(1, Math.ceil(lista.length / ITENS_POR_PAGINA))
+const itensEstoqueBaixoPaginados = computed(() => paginar(itensEstoqueBaixo.value, paginaEstoqueBaixo.value))
 
 // Dados do comparativo de lojas (exclusivo super_admin)
 const comparativoLojas = ref({
@@ -68,6 +73,7 @@ const formatarNumero = valor => {
 // Opções e séries do Gráfico Donut de Participação por Loja
 const chartDonutOptions = computed(() => {
   const labels = comparativoLojas.value.lojas.map(l => l.loja_nome || `Loja ${l.loja_id}`)
+
   return {
     chart: {
       type: 'donut',
@@ -109,12 +115,14 @@ const chartDonutOptions = computed(() => {
 const chartDonutSeries = computed(() => {
   const series = comparativoLojas.value.lojas.map(l => parseFloat(l.valor_total || 0))
   const temValor = series.some(v => v > 0)
+
   return temValor ? series : [1]
 })
 
 // Opções e séries do Gráfico de Barras de Faturamento por Loja (30 dias)
 const chartBarOptions = computed(() => {
   const categories = comparativoLojas.value.lojas.map(l => l.loja_nome)
+
   return {
     chart: {
       type: 'bar',
@@ -152,6 +160,7 @@ const chartBarOptions = computed(() => {
 
 const chartBarSeries = computed(() => {
   const data = comparativoLojas.value.lojas.map(l => parseFloat(l.valor_total || 0))
+
   return [
     {
       name: 'Faturamento (30d)',
@@ -170,6 +179,7 @@ const carregarDados = async () => {
       resumoConsolidado.value = resResumo.data.consolidado || {}
       dadosPorLoja.value = resResumo.data.por_loja || []
       itensEstoqueBaixo.value = resResumo.data.itens_estoque_baixo || []
+      paginaEstoqueBaixo.value = 1
     }
 
     if (isSuperAdmin.value) {
@@ -586,62 +596,62 @@ onMounted(async () => {
       </VCardItem>
       <div class="table-responsive">
         <VTable class="text-no-wrap">
-        <thead>
-          <tr>
-            <th>LOJA</th>
-            <th>TIPO</th>
-            <th class="text-center">
-              TRANSAÇÕES
-            </th>
-            <th class="text-end">
-              FATURAMENTO TOTAL
-            </th>
-            <th class="text-end">
-              TICKET MÉDIO
-            </th>
-            <th class="text-end">
-              PARTICIPAÇÃO
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="l in comparativoLojas.lojas"
-            :key="l.loja_id"
-          >
-            <td class="font-weight-medium">
-              {{ l.loja_nome }}
-            </td>
-            <td>
-              <VChip
-                :color="l.is_matriz ? 'primary' : 'secondary'"
-                size="small"
-                variant="tonal"
-              >
-                {{ l.is_matriz ? 'Matriz' : 'Filial' }}
-              </VChip>
-            </td>
-            <td class="text-center">
-              {{ formatarNumero(l.total_vendas) }}
-            </td>
-            <td class="text-end font-weight-semibold text-primary">
-              {{ formatarMoeda(l.valor_total) }}
-            </td>
-            <td class="text-end">
-              {{ formatarMoeda(l.ticket_medio) }}
-            </td>
-            <td class="text-end">
-              <VChip
-                color="info"
-                size="small"
-                variant="tonal"
-              >
-                {{ l.participacao_percentual }}%
-              </VChip>
-            </td>
-          </tr>
-        </tbody>
-      </VTable>
+          <thead>
+            <tr>
+              <th>LOJA</th>
+              <th>TIPO</th>
+              <th class="text-center">
+                TRANSAÇÕES
+              </th>
+              <th class="text-end">
+                FATURAMENTO TOTAL
+              </th>
+              <th class="text-end">
+                TICKET MÉDIO
+              </th>
+              <th class="text-end">
+                PARTICIPAÇÃO
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="l in comparativoLojas.lojas"
+              :key="l.loja_id"
+            >
+              <td class="font-weight-medium">
+                {{ l.loja_nome }}
+              </td>
+              <td>
+                <VChip
+                  :color="l.is_matriz ? 'primary' : 'secondary'"
+                  size="small"
+                  variant="tonal"
+                >
+                  {{ l.is_matriz ? 'Matriz' : 'Filial' }}
+                </VChip>
+              </td>
+              <td class="text-center">
+                {{ formatarNumero(l.total_vendas) }}
+              </td>
+              <td class="text-end font-weight-semibold text-primary">
+                {{ formatarMoeda(l.valor_total) }}
+              </td>
+              <td class="text-end">
+                {{ formatarMoeda(l.ticket_medio) }}
+              </td>
+              <td class="text-end">
+                <VChip
+                  color="info"
+                  size="small"
+                  variant="tonal"
+                >
+                  {{ l.participacao_percentual }}%
+                </VChip>
+              </td>
+            </tr>
+          </tbody>
+        </VTable>
       </div>
     </VCard>
 
@@ -691,92 +701,92 @@ onMounted(async () => {
         class="table-responsive"
       >
         <VTable class="text-no-wrap">
-        <thead>
-          <tr>
-            <th>ITEM / CÓDIGO</th>
-            <th v-if="isSuperAdmin">
-              LOJA
-            </th>
-            <th class="text-center">
-              ESTOQUE ATUAL
-            </th>
-            <th class="text-center">
-              ESTOQUE MÍNIMO
-            </th>
-            <th class="text-center">
-              STATUS
-            </th>
-            <th class="text-end">
-              AÇÃO
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="item in itensEstoqueBaixo"
-            :key="item.id"
-          >
-            <td class="font-weight-medium">
-              {{ item.nome }}
-              <div class="text-xs text-medium-emphasis">
-                ID: #{{ item.id }}
-              </div>
-            </td>
+          <thead>
+            <tr>
+              <th>ITEM / CÓDIGO</th>
+              <th v-if="isSuperAdmin">
+                LOJA
+              </th>
+              <th class="text-center">
+                ESTOQUE ATUAL
+              </th>
+              <th class="text-center">
+                ESTOQUE MÍNIMO
+              </th>
+              <th class="text-center">
+                STATUS
+              </th>
+              <th class="text-end">
+                AÇÃO
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="item in itensEstoqueBaixoPaginados"
+              :key="item.id"
+            >
+              <td class="font-weight-medium">
+                {{ item.nome }}
+                <div class="text-xs text-medium-emphasis">
+                  ID: #{{ item.id }}
+                </div>
+              </td>
 
-            <td v-if="isSuperAdmin">
-              <VChip
-                size="x-small"
-                variant="outlined"
-              >
-                {{ item.loja_nome || `Loja ${item.loja_id}` }}
-              </VChip>
-            </td>
+              <td v-if="isSuperAdmin">
+                <VChip
+                  size="x-small"
+                  variant="outlined"
+                >
+                  {{ item.loja_nome || `Loja ${item.loja_id}` }}
+                </VChip>
+              </td>
 
-            <td class="text-center">
-              <VChip
-                :color="item.quantidade_disponivel <= 0 ? 'error' : 'warning'"
-                size="small"
-                variant="flat"
-              >
-                {{ item.quantidade_disponivel }}
-              </VChip>
-            </td>
+              <td class="text-center">
+                <VChip
+                  :color="item.quantidade_disponivel <= 0 ? 'error' : 'warning'"
+                  size="small"
+                  variant="flat"
+                >
+                  {{ item.quantidade_disponivel }}
+                </VChip>
+              </td>
 
-            <td class="text-center font-weight-medium">
-              {{ item.quantidade_minima }}
-            </td>
+              <td class="text-center font-weight-medium">
+                {{ item.quantidade_minima }}
+              </td>
 
-            <td class="text-center">
-              <VChip
-                v-if="item.quantidade_disponivel <= 0"
-                color="error"
-                size="x-small"
-                variant="tonal"
-              >
-                Esgotado
-              </VChip>
-              <VChip
-                v-else
-                color="warning"
-                size="x-small"
-                variant="tonal"
-              >
-                Estoque Crítico
-              </VChip>
-            </td>
+              <td class="text-center">
+                <VChip
+                  v-if="item.quantidade_disponivel <= 0"
+                  color="error"
+                  size="x-small"
+                  variant="tonal"
+                >
+                  Esgotado
+                </VChip>
+                <VChip
+                  v-else
+                  color="warning"
+                  size="x-small"
+                  variant="tonal"
+                >
+                  Estoque Crítico
+                </VChip>
+              </td>
 
-            <td class="text-end">
-              <VBtn
-                variant="text"
-                color="primary"
-                size="x-small"
-                icon="mdi-pencil-outline"
-                @click="navegarParaEstoque"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </VTable>
+              <td class="text-end">
+                <VBtn
+                  variant="text"
+                  color="primary"
+                  size="x-small"
+                  icon="mdi-pencil-outline"
+                  @click="navegarParaEstoque"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </VTable>
       </div>
 
       <VCardText
@@ -796,6 +806,13 @@ onMounted(async () => {
           Nenhuma peça com estoque igual ou abaixo do mínimo configurado.
         </p>
       </VCardText>
+      <VPagination
+        v-if="itensEstoqueBaixo.length > ITENS_POR_PAGINA"
+        v-model="paginaEstoqueBaixo"
+        :length="totalPaginas(itensEstoqueBaixo)"
+        :total-visible="5"
+        class="pa-4"
+      />
     </VCard>
   </div>
 </template>

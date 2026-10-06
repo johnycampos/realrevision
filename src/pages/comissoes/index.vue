@@ -400,11 +400,10 @@ onMounted(async () => {
           >
             <VSelect
               v-model="filtroLoja"
-              :items="lojas"
+              :items="[{ id: null, nome: 'Todas as Lojas' }, ...lojas]"
               item-title="nome"
               item-value="id"
               label="Filtrar por Loja"
-              placeholder="Todas as Lojas"
               clearable
               density="comfortable"
               :loading="isLoadingLojas"
@@ -423,7 +422,6 @@ onMounted(async () => {
               item-title="username"
               item-value="id"
               label="Filtrar por Vendedor"
-              placeholder="Todos os Vendedores"
               clearable
               density="comfortable"
               :loading="isLoadingVendedores"

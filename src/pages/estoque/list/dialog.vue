@@ -89,6 +89,7 @@
                 class="flex-grow-1"
                 @update:model-value="(value) => {                  
                   abrirDialogCadastroGrupo(value)
+                  itemEditado.subgrupo_id = null
                   carregarSubGrupos()
                 }"
               />
@@ -655,6 +656,7 @@ watch(
   () => props.item,
   () => {
     itemEditado.value = { ...props.item }
+    carregarSubGrupos()
     carregarFornecedoresItem()
   },
   { deep: true }
@@ -771,10 +773,13 @@ const carregarGrupos = async () => {
 }
 
 const carregarSubGrupos = async () => {
+  const grupoId = itemEditado.value.grupo_id
+  subgrupos.value = []
+  if (!Number.isInteger(Number(grupoId)) || Number(grupoId) <= 0) return
+
   try {
-    subgrupos.value = []
-    console.log('carregando subgrupos', itemEditado.value.grupo_id)
-    const response = await estoque.listarSubgrupos(itemEditado.value.grupo_id)
+    const response = await estoque.listarSubgrupos(grupoId)
+    if (itemEditado.value.grupo_id !== grupoId) return
     if (response && response.data) {
       subgrupos.value = response.data.map(subgrupo => ({
         id: subgrupo.id,
@@ -785,11 +790,12 @@ const carregarSubGrupos = async () => {
       subgrupos.value = []
     }
   } catch (error) {
-    console.error('Erro ao carregar grupos:', error)
-    snackbarText.value = 'Erro ao carregar grupos. Tente novamente.'
+    if (itemEditado.value.grupo_id !== grupoId) return
+    console.error('Erro ao carregar subgrupos:', error)
+    snackbarText.value = 'Erro ao carregar subgrupos. Tente novamente.'
     snackbarColor.value = 'error'
     snackbar.value = true
-    grupos.value = []
+    subgrupos.value = []
   }
 }
 
@@ -803,14 +809,14 @@ const carregarUnidades = async () => {
       }))
     } else {
       console.error('Dados recebidos inválidos:', response)
-      subgrupos.value = []
+      unidades.value = []
     }
   } catch (error) {
-    console.error('Erro ao carregar grupos:', error)
-    snackbarText.value = 'Erro ao carregar grupos. Tente novamente.'
+    console.error('Erro ao carregar unidades:', error)
+    snackbarText.value = 'Erro ao carregar unidades. Tente novamente.'
     snackbarColor.value = 'error'
     snackbar.value = true
-    grupos.value = []
+    unidades.value = []
   }
 }
 
@@ -824,14 +830,14 @@ const carregarFabricantes = async () => {
       }))
     } else {
       console.error('Dados recebidos inválidos:', response)
-      subgrupos.value = []
+      fabricantes.value = []
     }
   } catch (error) {
-    console.error('Erro ao carregar grupos:', error)
-    snackbarText.value = 'Erro ao carregar grupos. Tente novamente.'
+    console.error('Erro ao carregar fabricantes:', error)
+    snackbarText.value = 'Erro ao carregar fabricantes. Tente novamente.'
     snackbarColor.value = 'error'
     snackbar.value = true
-    grupos.value = []
+    fabricantes.value = []
   }
 }
 
@@ -845,14 +851,14 @@ const carregarLocalEstoque = async () => {
       }))
     } else {
       console.error('Dados recebidos inválidos:', response)
-      subgrupos.value = []
+      localEstoque.value = []
     }
   } catch (error) {
-    console.error('Erro ao carregar grupos:', error)
-    snackbarText.value = 'Erro ao carregar grupos. Tente novamente.'
+    console.error('Erro ao carregar locais de estoque:', error)
+    snackbarText.value = 'Erro ao carregar locais de estoque. Tente novamente.'
     snackbarColor.value = 'error'
     snackbar.value = true
-    grupos.value = []
+    localEstoque.value = []
   }
 }
 
