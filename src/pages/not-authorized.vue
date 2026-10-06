@@ -16,9 +16,9 @@ const authThemeMask = useGenerateImageVariant(miscMaskLight, miscMaskDark)
         401
       </h1>
       <h5 class="text-h5 font-weight-medium mb-3">
-        You are not authorized! 🔐
+        Você não está autorizado! 🔐
       </h5>
-      <p>You don't have permission to access this page. Go Home!</p>
+      <p>Você não tem permissão para acessar esta página. Volte para o início!</p>
     </div>
 
     <!-- 👉 Image -->
@@ -33,7 +33,7 @@ const authThemeMask = useGenerateImageVariant(miscMaskLight, miscMaskDark)
         to="/"
         class="mt-10"
       >
-        Back to Home
+        Voltar para o Início
       </VBtn>
     </div>
 

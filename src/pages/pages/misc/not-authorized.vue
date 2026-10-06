@@ -12,8 +12,8 @@ const authThemeMask = useGenerateImageVariant(miscMaskLight, miscMaskDark)
   <div class="misc-wrapper">
     <ErrorHeader
       error-code="401"
-      error-title="You are not authorized! 🔐"
-      error-description="You don't have permission to access this page. Go Home!"
+      error-title="Você não está autorizado! 🔐"
+      error-description="Você não tem permissão para acessar esta página. Volte para o início!"
     />
 
     <!-- 👉 Image -->
@@ -28,7 +28,7 @@ const authThemeMask = useGenerateImageVariant(miscMaskLight, miscMaskDark)
         to="/"
         class="mt-10"
       >
-        Back to Home
+        Voltar para o Início
       </VBtn>
     </div>
 
