@@ -52,6 +52,7 @@ const avatarBadgeProps = {
       variant="tonal"
     >
       <VImg
+        class="user-profile-avatar-image"
         :src="userAvatar"
         :alt="userData?.username || 'Usuário'"
       />
@@ -75,6 +76,7 @@ const avatarBadgeProps = {
                     variant="tonal"
                   >
                     <VImg
+                      class="user-profile-avatar-image"
                       :src="userAvatar"
                       :alt="userData?.username || 'Usuário'"
                     />
@@ -127,3 +129,14 @@ const avatarBadgeProps = {
     </VAvatar>
   </VBadge>
 </template>
+
+<style scoped>
+.user-profile-avatar-image {
+  position: relative;
+  z-index: 1;
+}
+
+.user-profile-avatar-image :deep(.v-img__img) {
+  z-index: 1;
+}
+</style>
