@@ -4,8 +4,9 @@ export default {
   /**
    * Consulta estoque disponível de outras lojas
    */
-  buscarEstoqueOutrasLojas: (busca = '') => {
-    const params = busca ? { busca } : {}
+  buscarEstoqueOutrasLojas: (busca = '', lojaId = null) => {
+    const params = { busca: busca || undefined, loja_id: lojaId || undefined }
+
     return API.get('/api/emprestimos/estoque-outras-lojas', { params })
       .then(response => response)
       .catch(error => {

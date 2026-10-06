@@ -6,6 +6,7 @@ meta:
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import emprestimosApi from '@/server/Emprestimos'
+import usuariosApi from '@/server/Usuarios'
 
 // Dados do Usuário Logado
 const currentUser = computed(() => {
@@ -20,6 +21,7 @@ const role = computed(() => currentUser.value.role || 'funcionario')
 const isSuperAdmin = computed(() => role.value === 'super_admin')
 const isAdminLoja = computed(() => role.value === 'admin_loja')
 const isEstoquista = computed(() => currentUser.value.estoquista === true)
+
 // Gerente da loja, super_admin, ou funcionário com a flag "estoquista" podem aprovar/rejeitar/pagar empréstimos
 const isAdminOrSuper = computed(() => isSuperAdmin.value || isAdminLoja.value || isEstoquista.value)
 
@@ -38,6 +40,7 @@ const paginaTodosEmprestimos = ref(1)
 
 const paginar = (lista, pagina) => {
   const start = (pagina - 1) * ITENS_POR_PAGINA
+
   return lista.slice(start, start + ITENS_POR_PAGINA)
 }
 
@@ -47,6 +50,16 @@ const totalPaginas = lista => Math.max(1, Math.ceil(lista.length / ITENS_POR_PAG
 // ABA 1: Estoque de Outras Lojas
 // ==========================================
 const buscaOutrasLojas = ref('')
+const lojaOutrasLojas = ref(null)
+const lojasDisponiveis = ref([])
+const carregarLojasDisponiveis = async () => {
+  try {
+    const response = await usuariosApi.listarLojas()
+    lojasDisponiveis.value = (response.data || []).filter(loja => Number(loja.id) !== Number(currentUser.value.loja_id))
+  } catch (err) {
+    mensagemErro.value = 'Erro ao carregar lojas para o filtro'
+  }
+}
 const itensOutrasLojas = ref([])
 const dialogSolicitar = ref(false)
 const itemSelecionadoParaSolicitar = ref(null)
@@ -55,19 +68,26 @@ const observacoesSolicitacao = ref('')
 const enviandoSolicitacao = ref(false)
 
 const itensOutrasLojasPaginados = computed(() => paginar(itensOutrasLojas.value, paginaEstoqueOutrasLojas.value))
+let ultimaBuscaEstoque = 0
 
 const carregarEstoqueOutrasLojas = async () => {
+  const buscaAtual = ++ultimaBuscaEstoque
   try {
     loading.value = true
     paginaEstoqueOutrasLojas.value = 1
-    const response = await emprestimosApi.buscarEstoqueOutrasLojas(buscaOutrasLojas.value)
+    const response = await emprestimosApi.buscarEstoqueOutrasLojas(buscaOutrasLojas.value, lojaOutrasLojas.value)
+    if (buscaAtual !== ultimaBuscaEstoque) return
     itensOutrasLojas.value = response.data || []
   } catch (err) {
+    if (buscaAtual !== ultimaBuscaEstoque) return
+    itensOutrasLojas.value = []
     mensagemErro.value = err.response?.data?.error || 'Erro ao consultar estoque de outras lojas'
   } finally {
-    loading.value = false
+    if (buscaAtual === ultimaBuscaEstoque) loading.value = false
   }
 }
+
+watch(lojaOutrasLojas, carregarEstoqueOutrasLojas)
 
 const abrirModalSolicitar = item => {
   itemSelecionadoParaSolicitar.value = item
@@ -84,11 +104,13 @@ const confirmarSolicitacao = async () => {
   const qtd = Number(quantidadeSolicitada.value)
   if (isNaN(qtd) || qtd <= 0) {
     mensagemErro.value = 'Informe uma quantidade válida maior que zero'
+
     return
   }
 
   if (qtd > Number(itemSelecionadoParaSolicitar.value.quantidade_disponivel)) {
     mensagemErro.value = `Quantidade excede o estoque disponível (${itemSelecionadoParaSolicitar.value.quantidade_disponivel})`
+
     return
   }
 
@@ -113,6 +135,7 @@ const confirmarSolicitacao = async () => {
 }
 
 const isAdminLojaOrEstoquista = computed(() => isAdminLoja.value || isEstoquista.value)
+
 // ==========================================
 // ABA 2: Meus Pedidos
 // ==========================================
@@ -247,6 +270,7 @@ const confirmarRegistroPagamento = async () => {
   if (!itemEmPagamento.value) return
   if (!formaPagamentoSelecionada.value) {
     mensagemErro.value = 'Selecione a forma de pagamento'
+
     return
   }
 
@@ -267,27 +291,27 @@ const confirmarRegistroPagamento = async () => {
 // Formatadores visuais
 const getStatusColor = status => {
   switch (status) {
-    case 'solicitado':
-      return 'warning'
-    case 'aprovado':
-      return 'success'
-    case 'rejeitado':
-      return 'error'
-    default:
-      return 'default'
+  case 'solicitado':
+    return 'warning'
+  case 'aprovado':
+    return 'success'
+  case 'rejeitado':
+    return 'error'
+  default:
+    return 'default'
   }
 }
 
 const getStatusLabel = status => {
   switch (status) {
-    case 'solicitado':
-      return 'Solicitado'
-    case 'aprovado':
-      return 'Aprovado'
-    case 'rejeitado':
-      return 'Rejeitado'
-    default:
-      return status
+  case 'solicitado':
+    return 'Solicitado'
+  case 'aprovado':
+    return 'Aprovado'
+  case 'rejeitado':
+    return 'Rejeitado'
+  default:
+    return status
   }
 }
 
@@ -295,6 +319,7 @@ const formatarData = dataStr => {
   if (!dataStr) return '-'
   try {
     const d = new Date(dataStr)
+
     return d.toLocaleString('pt-BR')
   } catch (e) {
     return dataStr
@@ -303,12 +328,14 @@ const formatarData = dataStr => {
 
 const formatarValor = val => {
   if (val === null || val === undefined || val === '') return '-'
+
   return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
 // Remove casas decimais desnecessárias (ex: 17.00 -> 17, 17.50 -> 17,5)
 const formatarQuantidade = val => {
   if (val === null || val === undefined || val === '') return '-'
+
   return Number(val).toLocaleString('pt-BR', { maximumFractionDigits: 2 })
 }
 
@@ -328,6 +355,7 @@ watch(activeTab, novaAba => {
 })
 
 onMounted(() => {
+  carregarLojasDisponiveis()
   carregarEstoqueOutrasLojas()
 })
 </script>
@@ -441,30 +469,44 @@ onMounted(() => {
                 cols="12"
                 md="8"
               >
-                <VTextField
-                  v-model="buscaOutrasLojas"
-                  density="compact"
-                  variant="outlined"
-                  placeholder="Pesquisar por código, nome da peça ou grupo..."
-                  prepend-inner-icon="mdi-magnify"
-                  clearable
-                  @keyup.enter="carregarEstoqueOutrasLojas"
-                  @click:clear="carregarEstoqueOutrasLojas"
-                />
+                <div class="d-flex flex-wrap flex-sm-nowrap align-center gap-2">
+                  <VTextField
+                    v-model="buscaOutrasLojas"
+                    density="compact"
+                    variant="outlined"
+                    placeholder="Pesquisar por código ou nome da peça..."
+                    prepend-inner-icon="mdi-magnify"
+                    clearable
+                    hide-details
+                    class="flex-grow-1"
+                    @keyup.enter="carregarEstoqueOutrasLojas"
+                    @click:clear="carregarEstoqueOutrasLojas"
+                  />
+                  <VBtn
+                    color="primary"
+                    prepend-icon="mdi-magnify"
+                    :loading="loading"
+                    @click="carregarEstoqueOutrasLojas"
+                  >
+                    Buscar
+                  </VBtn>
+                </div>
               </VCol>
               <VCol
                 cols="12"
                 md="4"
-                class="d-flex justify-end gap-2"
               >
-                <VBtn
-                  color="primary"
-                  prepend-icon="mdi-magnify"
-                  :loading="loading"
-                  @click="carregarEstoqueOutrasLojas"
-                >
-                  Buscar
-                </VBtn>
+                <VSelect
+                  v-model="lojaOutrasLojas"
+                  :items="[{ id: null, nome: 'Todas as Outras Lojas' }, ...lojasDisponiveis]"
+                  item-title="nome"
+                  item-value="id"
+                  label="Filtrar por Loja"
+                  density="compact"
+                  variant="outlined"
+                  clearable
+                  hide-details
+                />
               </VCol>
             </VRow>
 
