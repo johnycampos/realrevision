@@ -7,6 +7,8 @@ meta:
 import { ref, computed, onMounted, watch } from 'vue'
 import comissoesApi from '@/server/Comissoes'
 import usuariosApi from '@/server/Usuarios'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 // Usuário logado e permissões
 const currentUser = computed(() => {
@@ -62,6 +64,7 @@ const formatarData = dataStr => {
   if (partes.length === 3) {
     return `${partes[2]}/${partes[1]}/${partes[0]}`
   }
+  
   return dataStr
 }
 
@@ -110,6 +113,7 @@ const gerarRelatorio = async () => {
 
   if (filtroPercentual.value === null || filtroPercentual.value === '' || Number(filtroPercentual.value) <= 0 || Number(filtroPercentual.value) > 100) {
     erro.value = 'Por favor, informe uma porcentagem de comissão válida entre 0.01% e 100%.'
+    
     return
   }
 
@@ -165,6 +169,166 @@ const limparFiltros = () => {
   }
 }
 
+// Helpers para Exportação em PDF
+const getNomeLojaAtual = () => {
+  if (!isSuperAdmin.value) {
+    return currentUser.value.loja_nome || 'Minha Loja'
+  }
+  if (!filtroLoja.value) {
+    return 'Consolidado - 3 Lojas'
+  }
+  const l = lojas.value.find(item => item.id === filtroLoja.value)
+  
+  return l ? l.nome : `Loja #${filtroLoja.value}`
+}
+
+const getTextoPeriodo = () => {
+  const p = dadosRelatorio.value.periodo || {}
+  if (p.data_inicio && p.data_fim) {
+    return `${formatarData(p.data_inicio)} até ${formatarData(p.data_fim)}`
+  }
+  if (p.data_inicio) {
+    return `A partir de ${formatarData(p.data_inicio)}`
+  }
+  if (p.data_fim) {
+    return `Até ${formatarData(p.data_fim)}`
+  }
+  
+  return 'Todo o histórico'
+}
+
+const getSufixoDataHoje = () => {
+  const hoje = new Date()
+  const yyyy = hoje.getFullYear()
+  const mm = String(hoje.getMonth() + 1).padStart(2, '0')
+  const dd = String(hoje.getDate()).padStart(2, '0')
+  
+  return `${yyyy}${mm}${dd}`
+}
+
+const desenharRodapePaginacao = doc => {
+  doc.setFontSize(8)
+  doc.setTextColor(120)
+  doc.text(
+    `Página ${doc.internal.getNumberOfPages()}`,
+    283,
+    205,
+    { align: 'right' },
+  )
+}
+
+const exportarPDF = () => {
+  try {
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+    const nomeLoja = getNomeLojaAtual()
+    const periodo = getTextoPeriodo()
+    const taxa = `${dadosRelatorio.value.percentual_aplicado}%`
+    const agora = new Date().toLocaleString('pt-BR')
+
+    // Cabeçalho institucional
+    doc.setFillColor(24, 103, 192) // Azul corporativo
+    doc.rect(0, 0, 297, 24, 'F')
+
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.text('REAL REVISION - RELATÓRIO DE COMISSÃO DO VENDEDOR', 14, 11)
+
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'normal')
+    doc.text(`Unidade: ${nomeLoja} | Período: ${periodo} | Comissão: ${taxa}`, 14, 18)
+    doc.text(`Emissão: ${agora}`, 283, 18, { align: 'right' })
+
+    const incluiColunaLoja = isSuperAdmin.value && !filtroLoja.value
+
+    const headers = incluiColunaLoja
+      ? ['#', 'Vendedor', 'Loja', 'Qtd. Vendas', 'Total Vendido', `Comissão (${taxa})`]
+      : ['#', 'Vendedor', 'Qtd. Vendas', 'Total Vendido', `Comissão (${taxa})`]
+
+    const rows = (dadosRelatorio.value.vendedores || []).map((v, idx) => {
+      if (incluiColunaLoja) {
+        return [
+          idx + 1,
+          v.vendedor_nome || '-',
+          v.loja_nome || '-',
+          v.quantidade_vendas,
+          formatarMoeda(v.valor_total_vendas),
+          formatarMoeda(v.valor_comissao),
+        ]
+      }
+      
+      return [
+        idx + 1,
+        v.vendedor_nome || '-',
+        v.quantidade_vendas,
+        formatarMoeda(v.valor_total_vendas),
+        formatarMoeda(v.valor_comissao),
+      ]
+    })
+
+    const columnStyles = incluiColunaLoja
+      ? {
+        0: { cellWidth: 12, halign: 'center' },
+        1: { cellWidth: 70 },
+        2: { cellWidth: 60 },
+        3: { cellWidth: 35, halign: 'center' },
+        4: { cellWidth: 45, halign: 'right' },
+        5: { cellWidth: 45, halign: 'right', fontStyle: 'bold' },
+      }
+      : {
+        0: { cellWidth: 15, halign: 'center' },
+        1: { cellWidth: 100 },
+        2: { cellWidth: 40, halign: 'center' },
+        3: { cellWidth: 55, halign: 'right' },
+        4: { cellWidth: 55, halign: 'right', fontStyle: 'bold' },
+      }
+
+    autoTable(doc, {
+      startY: 28,
+      head: [headers],
+      body: rows,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [33, 43, 54],
+        textColor: 255,
+        fontStyle: 'bold',
+        fontSize: 9,
+      },
+      styles: {
+        fontSize: 8.5,
+        cellPadding: 3,
+      },
+      columnStyles,
+      didDrawPage: () => desenharRodapePaginacao(doc),
+    })
+
+    // Caixa de Totais no final
+    const finalY = doc.lastAutoTable.finalY + 8
+    if (finalY < 195) {
+      doc.setFillColor(245, 247, 250)
+      doc.rect(14, finalY, 269, 14, 'F')
+      doc.setDrawColor(200, 205, 215)
+      doc.rect(14, finalY, 269, 14, 'S')
+
+      doc.setFontSize(9)
+      doc.setTextColor(40, 40, 40)
+      doc.setFont('helvetica', 'bold')
+
+      const t = dadosRelatorio.value.totais || {}
+      doc.text(
+        `Total de Vendas Realizadas: ${t.quantidade_vendas || 0}   |   Valor Total Vendido: ${formatarMoeda(t.valor_total_vendas)}   |   Total de Comissão (${taxa}): ${formatarMoeda(t.valor_comissao)}`,
+        18,
+        finalY + 9,
+      )
+    }
+
+    doc.save(`relatorio-comissoes-${getSufixoDataHoje()}.pdf`)
+  } catch (err) {
+    console.error('Erro ao gerar PDF de comissões:', err)
+    erro.value = `Erro ao gerar arquivo PDF de comissões: ${err.message}`
+  }
+}
+
 onMounted(async () => {
   await carregarLojas()
   await carregarVendedores()
@@ -177,11 +341,21 @@ onMounted(async () => {
     <VRow class="mb-2">
       <VCol cols="12">
         <div class="d-flex align-center gap-3">
-          <VAvatar color="primary" variant="tonal" rounded size="44">
-            <VIcon icon="mdi-percent" size="28" />
+          <VAvatar
+            color="primary"
+            variant="tonal"
+            rounded
+            size="44"
+          >
+            <VIcon
+              icon="mdi-percent"
+              size="28"
+            />
           </VAvatar>
           <div>
-            <h2 class="text-h5 font-weight-bold mb-0">Relatório de Comissão do Vendedor</h2>
+            <h2 class="text-h5 font-weight-bold mb-0">
+              Relatório de Comissão do Vendedor
+            </h2>
             <p class="text-body-2 text-medium-emphasis mb-0">
               Calcule as comissões sobre as vendas de cada vendedor por período e percentual parametrizável
             </p>
@@ -206,7 +380,11 @@ onMounted(async () => {
     <VCard class="mb-6">
       <VCardItem>
         <VCardTitle class="text-base font-weight-semibold">
-          <VIcon icon="mdi-filter-variant" size="20" class="me-2" />
+          <VIcon
+            icon="mdi-filter-variant"
+            size="20"
+            class="me-2"
+          />
           Filtros do Relatório
         </VCardTitle>
       </VCardItem>
@@ -252,7 +430,10 @@ onMounted(async () => {
             >
               <template #item="{ props, item }">
                 <VListItem v-bind="props">
-                  <template #subtitle v-if="isSuperAdmin && !filtroLoja">
+                  <template
+                    v-if="isSuperAdmin && !filtroLoja"
+                    #subtitle
+                  >
                     <span class="text-caption text-medium-emphasis">{{ item.raw.loja_nome || `Loja #${item.raw.loja_id}` }}</span>
                   </template>
                 </VListItem>
@@ -327,28 +508,63 @@ onMounted(async () => {
           >
             Gerar Relatório
           </VBtn>
+          <VBtn
+            color="error"
+            variant="tonal"
+            prepend-icon="mdi-file-pdf-box"
+            :disabled="!relatorioGerado"
+            @click="exportarPDF"
+          >
+            Exportar PDF
+          </VBtn>
         </div>
       </VCardText>
     </VCard>
 
     <!-- Indicador de Loading Geral -->
-    <div v-if="isLoadingRelatorio" class="text-center py-12">
-      <VProgressCircular indeterminate color="primary" size="48" class="mb-3" />
-      <p class="text-body-2 text-medium-emphasis">Calculando vendas e comissões...</p>
+    <div
+      v-if="isLoadingRelatorio"
+      class="text-center py-12"
+    >
+      <VProgressCircular
+        indeterminate
+        color="primary"
+        size="48"
+        class="mb-3"
+      />
+      <p class="text-body-2 text-medium-emphasis">
+        Calculando vendas e comissões...
+      </p>
     </div>
 
     <!-- Resultados -->
     <div v-else-if="relatorioGerado">
       <!-- Cards de Totais / KPIs -->
       <VRow class="mb-6">
-        <VCol cols="12" sm="6" md="3">
-          <VCard variant="tonal" color="primary">
+        <VCol
+          cols="12"
+          sm="6"
+          md="3"
+        >
+          <VCard
+            variant="tonal"
+            color="primary"
+          >
             <VCardText class="d-flex align-center gap-3">
-              <VAvatar color="primary" rounded size="40">
-                <VIcon icon="mdi-cash-register" size="24" />
+              <VAvatar
+                color="primary"
+                rounded
+                size="40"
+              >
+                <VIcon
+                  icon="mdi-cash-register"
+                  size="24"
+                />
               </VAvatar>
               <div>
-                <p class="text-caption mb-0 font-weight-medium">Total em Vendas</p>
+                <p class="text-caption mb-0 font-weight-medium">
+                  Total em Vendas
+                </p>
                 <h3 class="text-h6 font-weight-bold mb-0">
                   {{ formatarMoeda(dadosRelatorio.totais.valor_total_vendas) }}
                 </h3>
@@ -357,14 +573,30 @@ onMounted(async () => {
           </VCard>
         </VCol>
 
-        <VCol cols="12" sm="6" md="3">
-          <VCard variant="tonal" color="success">
+        <VCol
+          cols="12"
+          sm="6"
+          md="3"
+        >
+          <VCard
+            variant="tonal"
+            color="success"
+          >
             <VCardText class="d-flex align-center gap-3">
-              <VAvatar color="success" rounded size="40">
-                <VIcon icon="mdi-percent" size="24" />
+              <VAvatar
+                color="success"
+                rounded
+                size="40"
+              >
+                <VIcon
+                  icon="mdi-percent"
+                  size="24"
+                />
               </VAvatar>
               <div>
-                <p class="text-caption mb-0 font-weight-medium">Total de Comissão</p>
+                <p class="text-caption mb-0 font-weight-medium">
+                  Total de Comissão
+                </p>
                 <h3 class="text-h6 font-weight-bold mb-0">
                   {{ formatarMoeda(dadosRelatorio.totais.valor_comissao) }}
                 </h3>
@@ -373,14 +605,30 @@ onMounted(async () => {
           </VCard>
         </VCol>
 
-        <VCol cols="12" sm="6" md="3">
-          <VCard variant="tonal" color="info">
+        <VCol
+          cols="12"
+          sm="6"
+          md="3"
+        >
+          <VCard
+            variant="tonal"
+            color="info"
+          >
             <VCardText class="d-flex align-center gap-3">
-              <VAvatar color="info" rounded size="40">
-                <VIcon icon="mdi-receipt-text-check" size="24" />
+              <VAvatar
+                color="info"
+                rounded
+                size="40"
+              >
+                <VIcon
+                  icon="mdi-receipt-text-check"
+                  size="24"
+                />
               </VAvatar>
               <div>
-                <p class="text-caption mb-0 font-weight-medium">Qtd. de Vendas</p>
+                <p class="text-caption mb-0 font-weight-medium">
+                  Qtd. de Vendas
+                </p>
                 <h3 class="text-h6 font-weight-bold mb-0">
                   {{ dadosRelatorio.totais.quantidade_vendas }}
                 </h3>
@@ -389,14 +637,30 @@ onMounted(async () => {
           </VCard>
         </VCol>
 
-        <VCol cols="12" sm="6" md="3">
-          <VCard variant="tonal" color="warning">
+        <VCol
+          cols="12"
+          sm="6"
+          md="3"
+        >
+          <VCard
+            variant="tonal"
+            color="warning"
+          >
             <VCardText class="d-flex align-center gap-3">
-              <VAvatar color="warning" rounded size="40">
-                <VIcon icon="mdi-calculator" size="24" />
+              <VAvatar
+                color="warning"
+                rounded
+                size="40"
+              >
+                <VIcon
+                  icon="mdi-calculator"
+                  size="24"
+                />
               </VAvatar>
               <div>
-                <p class="text-caption mb-0 font-weight-medium">Taxa Aplicada</p>
+                <p class="text-caption mb-0 font-weight-medium">
+                  Taxa Aplicada
+                </p>
                 <h3 class="text-h6 font-weight-bold mb-0">
                   {{ dadosRelatorio.percentual_aplicado }}%
                 </h3>
@@ -420,40 +684,79 @@ onMounted(async () => {
                 <span v-if="dadosRelatorio.periodo.data_fim"> até {{ formatarData(dadosRelatorio.periodo.data_fim) }}</span>
               </VCardSubtitle>
             </div>
-            <VChip color="primary" variant="tonal" size="small">
+            <VChip
+              color="primary"
+              variant="tonal"
+              size="small"
+            >
               {{ dadosRelatorio.vendedores.length }} vendedor(es)
             </VChip>
           </div>
         </VCardItem>
 
         <VCardText class="px-0">
-          <VTable v-if="dadosRelatorio.vendedores.length > 0" hover class="text-no-wrap">
+          <VTable
+            v-if="dadosRelatorio.vendedores.length > 0"
+            hover
+            class="text-no-wrap"
+          >
             <thead>
               <tr>
-                <th class="text-left font-weight-bold">VENDEDOR</th>
-                <th v-if="isSuperAdmin && !filtroLoja" class="text-left font-weight-bold">LOJA</th>
-                <th class="text-center font-weight-bold">QTD. VENDAS</th>
-                <th class="text-right font-weight-bold">TOTAL VENDIDO</th>
-                <th class="text-right font-weight-bold">COMISSÃO ({{ dadosRelatorio.percentual_aplicado }}%)</th>
+                <th class="text-left font-weight-bold">
+                  VENDEDOR
+                </th>
+                <th
+                  v-if="isSuperAdmin && !filtroLoja"
+                  class="text-left font-weight-bold"
+                >
+                  LOJA
+                </th>
+                <th class="text-center font-weight-bold">
+                  QTD. VENDAS
+                </th>
+                <th class="text-right font-weight-bold">
+                  TOTAL VENDIDO
+                </th>
+                <th class="text-right font-weight-bold">
+                  COMISSÃO ({{ dadosRelatorio.percentual_aplicado }}%)
+                </th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="vendedor in dadosRelatorio.vendedores" :key="`${vendedor.vendedor_id}-${vendedor.loja_id}`">
+              <tr
+                v-for="vendedor in dadosRelatorio.vendedores"
+                :key="`${vendedor.vendedor_id}-${vendedor.loja_id}`"
+              >
                 <td>
                   <div class="d-flex align-center gap-2">
-                    <VAvatar size="28" color="primary" variant="tonal">
-                      <VIcon icon="mdi-account" size="16" />
+                    <VAvatar
+                      size="28"
+                      color="primary"
+                      variant="tonal"
+                    >
+                      <VIcon
+                        icon="mdi-account"
+                        size="16"
+                      />
                     </VAvatar>
                     <span class="font-weight-medium">{{ vendedor.vendedor_nome }}</span>
                   </div>
                 </td>
                 <td v-if="isSuperAdmin && !filtroLoja">
-                  <VChip size="x-small" variant="outlined" color="primary">
+                  <VChip
+                    size="x-small"
+                    variant="outlined"
+                    color="primary"
+                  >
                     {{ vendedor.loja_nome }}
                   </VChip>
                 </td>
                 <td class="text-center">
-                  <VChip size="small" variant="tonal" color="info">
+                  <VChip
+                    size="small"
+                    variant="tonal"
+                    color="info"
+                  >
                     {{ vendedor.quantidade_vendas }}
                   </VChip>
                 </td>
@@ -468,20 +771,39 @@ onMounted(async () => {
             <tfoot>
               <tr class="bg-var-theme-surface font-weight-bold">
                 <td>TOTAL GERAL</td>
-                <td v-if="isSuperAdmin && !filtroLoja"></td>
-                <td class="text-center">{{ dadosRelatorio.totais.quantidade_vendas }}</td>
-                <td class="text-right">{{ formatarMoeda(dadosRelatorio.totais.valor_total_vendas) }}</td>
-                <td class="text-right text-success">{{ formatarMoeda(dadosRelatorio.totais.valor_comissao) }}</td>
+                <td v-if="isSuperAdmin && !filtroLoja" />
+                <td class="text-center">
+                  {{ dadosRelatorio.totais.quantidade_vendas }}
+                </td>
+                <td class="text-right">
+                  {{ formatarMoeda(dadosRelatorio.totais.valor_total_vendas) }}
+                </td>
+                <td class="text-right text-success">
+                  {{ formatarMoeda(dadosRelatorio.totais.valor_comissao) }}
+                </td>
               </tr>
             </tfoot>
           </VTable>
 
           <!-- Estado Nenhum Resultado -->
-          <div v-else class="text-center py-10">
-            <VAvatar color="warning" variant="tonal" size="56" class="mb-3">
-              <VIcon icon="mdi-alert-circle-outline" size="32" />
+          <div
+            v-else
+            class="text-center py-10"
+          >
+            <VAvatar
+              color="warning"
+              variant="tonal"
+              size="56"
+              class="mb-3"
+            >
+              <VIcon
+                icon="mdi-alert-circle-outline"
+                size="32"
+              />
             </VAvatar>
-            <h4 class="text-h6 font-weight-medium mb-1">Nenhuma venda encontrada</h4>
+            <h4 class="text-h6 font-weight-medium mb-1">
+              Nenhuma venda encontrada
+            </h4>
             <p class="text-body-2 text-medium-emphasis">
               Não foram encontradas vendas para os filtros e período informados.
             </p>

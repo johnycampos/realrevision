@@ -4,22 +4,52 @@ import vendas from './vendas'
 import emprestimos from './emprestimos'
 import configuracoes from './configuracoes'
 import relatorios from './relatorios'
-import comissoes from './comissoes'
 
 export const allNavItems = [
   ...crm,
   ...estoque,
   ...vendas,
   ...emprestimos,
-  ...comissoes,
   ...configuracoes,
   ...relatorios,
 ]
 
+const carregarMenusPermitidos = userData => {
+  const rawMenus = localStorage.getItem('userMenus')
+  if (rawMenus) {
+    try {
+      const parsed = JSON.parse(rawMenus)
+      if (Array.isArray(parsed)) return parsed
+    } catch {
+      // fallback
+    }
+  }
+  if (Array.isArray(userData.menus)) {
+    return userData.menus
+  }
+
+  return []
+}
+
+const filtrarItemComFilhos = (item, userMenus) => {
+  const filteredChildren = item.children.filter(child => {
+    const key = child.menuKey || item.menuKey
+
+    return key ? userMenus.includes(key) : false
+  })
+
+  if (filteredChildren.length === 0) return null
+
+  return {
+    ...item,
+    children: filteredChildren,
+  }
+}
+
 /**
  * Filtra a lista de navegação baseada no papel e permissões de menu do usuário logado.
- * - 'super_admin' e 'admin_loja': visualizam todos os menus.
- * - 'funcionario': visualiza estritamente os menus que constam em userMenus (fail-closed).
+ * - 'super_admin' e 'admin_loja': visualizam todos os menus e todos os submenus.
+ * - 'funcionario': visualiza estritamente os menus/submenus que constam em userMenus (fail-closed).
  */
 export const getNavItemsForUser = () => {
   try {
@@ -27,37 +57,29 @@ export const getNavItemsForUser = () => {
     const userData = rawUser ? JSON.parse(rawUser) : {}
     const role = userData.role
 
-    // Administradores e super_admin veem todos os menus
     if (role === 'super_admin' || role === 'admin_loja' || role === 'admin') {
       return allNavItems
     }
 
-    // Funcionários veem apenas os menus habilitados (fail-closed)
-    const rawMenus = localStorage.getItem('userMenus')
-    let userMenus = []
-    if (rawMenus) {
-      try {
-        userMenus = JSON.parse(rawMenus)
-      } catch (e) {
-        userMenus = []
-      }
-    }
-
-    // Se userData já tiver menus cadastrados
-    if ((!userMenus || userMenus.length === 0) && Array.isArray(userData.menus)) {
-      userMenus = userData.menus
-    }
-
-    if (!Array.isArray(userMenus) || userMenus.length === 0) {
+    const userMenus = carregarMenusPermitidos(userData)
+    if (userMenus.length === 0) {
       return []
     }
 
-    return allNavItems.filter(item => {
-      if (!item.menuKey) return false
-      return userMenus.includes(item.menuKey)
-    })
+    const filtered = []
+    for (const item of allNavItems) {
+      if (Array.isArray(item.children) && item.children.length > 0) {
+        const itemFiltrado = filtrarItemComFilhos(item, userMenus)
+        if (itemFiltrado) filtered.push(itemFiltrado)
+      } else if (item.menuKey && userMenus.includes(item.menuKey)) {
+        filtered.push(item)
+      }
+    }
+
+    return filtered
   } catch (e) {
     console.error('Erro ao filtrar navItems:', e)
+
     return []
   }
 }

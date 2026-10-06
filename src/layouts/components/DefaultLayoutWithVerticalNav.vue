@@ -9,7 +9,6 @@ import { useThemeConfig } from '@core/composable/useThemeConfig'
 
 // Components
 import Footer from '@/layouts/components/Footer.vue'
-import NavBarI18n from '@/layouts/components/NavBarI18n.vue'
 import NavBarNotifications from '@/layouts/components/NavBarNotifications.vue'
 import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
 import UserProfile from '@/layouts/components/UserProfile.vue'
@@ -85,7 +84,6 @@ injectSkinClasses()
 
         <VSpacer />
 
-        <NavBarI18n />
         <NavbarThemeSwitcher />
         <NavBarNotifications class="me-2" />
         <UserProfile />

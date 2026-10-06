@@ -1,8 +1,10 @@
 export default [
   {
     title: 'Relatórios',
-    menuKey: 'relatorios',
     icon: { icon: 'mdi-file-chart-outline' },
-    to: 'relatorios',
+    children: [
+      { title: 'Vendas e Estoque', to: 'relatorios', menuKey: 'relatorios' },
+      { title: 'Comissão do Vendedor', to: 'comissoes', menuKey: 'comissoes' },
+    ],
   },
 ]
