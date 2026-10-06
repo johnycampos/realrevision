@@ -82,11 +82,27 @@
                       <tr
                         v-for="item in paginatedProducts"
                         :key="item.id"
+                        class="product-row"
+                        :class="{ 'product-row--disabled': item.quantidade_disponivel <= 0 }"
+                        @click="item.quantidade_disponivel > 0 && addToCart(item)"
                       >
                         <td class="font-weight-medium">
                           {{ item.codigo }}
                         </td>
-                        <td>{{ item.nome }}</td>
+                        <td class="product-name-cell">
+                          <VTooltip
+                            :text="item.nome"
+                            location="top"
+                            open-delay="300"
+                          >
+                            <template #activator="{ props: tooltipProps }">
+                              <span
+                                v-bind="tooltipProps"
+                                class="product-name-text"
+                              >{{ item.nome }}</span>
+                            </template>
+                          </VTooltip>
+                        </td>
                         <td class="text-end font-weight-bold">
                           {{ formatCurrency(item.preco_consumidor) }}
                         </td>
@@ -106,7 +122,7 @@
                             icon="mdi-cart-plus"
                             :disabled="item.quantidade_disponivel <= 0"
                             title="Adicionar ao carrinho"
-                            @click="addToCart(item)"
+                            @click.stop="addToCart(item)"
                           />
                         </td>
                       </tr>
@@ -758,5 +774,30 @@ onMounted(() => {
 .payment-method-group :deep(.v-selection-control-group) {
   flex-wrap: wrap;
   row-gap: 4px;
+}
+
+.product-row {
+  cursor: pointer;
+}
+
+.product-row:hover {
+  background-color: rgba(var(--v-theme-primary), 0.06);
+}
+
+.product-row--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.product-name-cell {
+  max-inline-size: 220px;
+}
+
+.product-name-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-inline-size: 220px;
 }
 </style>

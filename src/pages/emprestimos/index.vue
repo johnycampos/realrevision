@@ -306,6 +306,12 @@ const formatarValor = val => {
   return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
+// Remove casas decimais desnecessárias (ex: 17.00 -> 17, 17.50 -> 17,5)
+const formatarQuantidade = val => {
+  if (val === null || val === undefined || val === '') return '-'
+  return Number(val).toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+}
+
 // Watch de abas para carregamento sob demanda
 watch(activeTab, novaAba => {
   mensagemErro.value = ''
@@ -503,12 +509,23 @@ onMounted(() => {
                     <td>
                       <span class="font-weight-medium">{{ item.codigo }}</span>
                     </td>
-                    <td>
+                    <td class="emprestimo-nome-cell">
                       <div class="d-flex flex-column">
-                        <span class="font-weight-medium">{{ item.nome }}</span>
+                        <VTooltip
+                          :text="item.nome"
+                          location="top"
+                          open-delay="300"
+                        >
+                          <template #activator="{ props: tooltipProps }">
+                            <span
+                              v-bind="tooltipProps"
+                              class="font-weight-medium emprestimo-nome-text"
+                            >{{ item.nome }}</span>
+                          </template>
+                        </VTooltip>
                         <span
                           v-if="item.nome_curto"
-                          class="text-xs text-medium-emphasis"
+                          class="text-xs text-medium-emphasis emprestimo-nome-text"
                         >
                           {{ item.nome_curto }}
                         </span>
@@ -529,7 +546,7 @@ onMounted(() => {
                         color="success"
                         variant="elevated"
                       >
-                        {{ item.quantidade_disponivel }} {{ item.unidade_sigla || 'un' }}
+                        {{ formatarQuantidade(item.quantidade_disponivel) }} {{ item.unidade_sigla || 'un' }}
                       </VChip>
                     </td>
                     <td>
@@ -623,7 +640,20 @@ onMounted(() => {
                   >
                     <td>#{{ pedido.id }}</td>
                     <td>{{ pedido.codigo_item }}</td>
-                    <td>{{ pedido.nome_item }}</td>
+                    <td class="emprestimo-nome-cell">
+                      <VTooltip
+                        :text="pedido.nome_item"
+                        location="top"
+                        open-delay="300"
+                      >
+                        <template #activator="{ props: tooltipProps }">
+                          <span
+                            v-bind="tooltipProps"
+                            class="emprestimo-nome-text"
+                          >{{ pedido.nome_item }}</span>
+                        </template>
+                      </VTooltip>
+                    </td>
                     <td>
                       <VChip
                         size="small"
@@ -778,9 +808,22 @@ onMounted(() => {
                     </td>
                     <td>{{ ped.solicitante_nome || '-' }}</td>
                     <td>{{ ped.codigo_item }}</td>
-                    <td>{{ ped.nome_item }}</td>
+                    <td class="emprestimo-nome-cell">
+                      <VTooltip
+                        :text="ped.nome_item"
+                        location="top"
+                        open-delay="300"
+                      >
+                        <template #activator="{ props: tooltipProps }">
+                          <span
+                            v-bind="tooltipProps"
+                            class="emprestimo-nome-text"
+                          >{{ ped.nome_item }}</span>
+                        </template>
+                      </VTooltip>
+                    </td>
                     <td class="font-weight-bold text-primary">
-                      {{ ped.quantidade }}
+                      {{ formatarQuantidade(ped.quantidade) }}
                     </td>
                     <td>{{ formatarData(ped.data_solicitacao) }}</td>
                     <td>
@@ -933,9 +976,22 @@ onMounted(() => {
                     </td>
                     <td>{{ item.solicitante_nome || '-' }}</td>
                     <td>{{ item.codigo_item }}</td>
-                    <td>{{ item.nome_item }}</td>
+                    <td class="emprestimo-nome-cell">
+                      <VTooltip
+                        :text="item.nome_item"
+                        location="top"
+                        open-delay="300"
+                      >
+                        <template #activator="{ props: tooltipProps }">
+                          <span
+                            v-bind="tooltipProps"
+                            class="emprestimo-nome-text"
+                          >{{ item.nome_item }}</span>
+                        </template>
+                      </VTooltip>
+                    </td>
                     <td class="font-weight-bold">
-                      {{ item.quantidade }}
+                      {{ formatarQuantidade(item.quantidade) }}
                     </td>
                     <td>
                       <VChip
@@ -1211,3 +1267,17 @@ onMounted(() => {
     </VDialog>
   </div>
 </template>
+
+<style scoped>
+.emprestimo-nome-cell {
+  max-inline-size: 220px;
+}
+
+.emprestimo-nome-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-inline-size: 220px;
+}
+</style>
