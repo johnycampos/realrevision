@@ -26,6 +26,7 @@ const errors = ref({
 })
 const refVForm = ref()
 const isFlatSnackbarVisible = ref(false)
+const loginErrorMessage = ref('')
 const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
@@ -60,7 +61,11 @@ const login = () => {
     
     return null
   }).catch(e => {
-    console.log('to no catch')
+    const message = e.response?.data?.message
+
+    loginErrorMessage.value = typeof message === 'string' && message.trim()
+      ? message
+      : 'Usuário ou Senha errada'
     isFlatSnackbarVisible.value = true
   })
 }
@@ -214,7 +219,7 @@ const onSubmit = () => {
       variant="flat"
       color="error"
     >
-      Usuário ou Senha errada!!!
+      {{ loginErrorMessage }}
     </VSnackbar>
   </div>
 </template>
