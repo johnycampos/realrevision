@@ -34,6 +34,8 @@ onMounted(() => {
 
 <template>
   <VBadge
+    class="flex-shrink-0"
+    :style="{ marginInlineEnd: `calc(${String(countEstoqueBaixo).length}ch + 12px)` }"
     :model-value="countEstoqueBaixo > 0"
     :content="countEstoqueBaixo"
     color="error"

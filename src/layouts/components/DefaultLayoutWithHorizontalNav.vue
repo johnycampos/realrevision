@@ -40,7 +40,7 @@ injectSkinClasses()
       </RouterLink>
       <VSpacer />
       <NavbarThemeSwitcher />
-      <NavBarNotifications class="me-2" />
+      <NavBarNotifications />
       <UserProfile />
     </template>
 
