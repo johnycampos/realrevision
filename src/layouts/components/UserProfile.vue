@@ -1,10 +1,20 @@
 <script setup>
-import { initialAbility } from '@/plugins/casl/ability'
-import { useAppAbility } from '@/plugins/casl/useAppAbility'
-
-const router = useRouter()
-const ability = useAppAbility()
 const userData = JSON.parse(localStorage.getItem('userData') || 'null')
+const roleLabels = {
+  super_admin: 'Super Admin',
+  admin_loja: 'Admin Loja',
+  funcionario: 'Funcionário',
+}
+const capitalizar = str => (str || '')
+  .split(' ')
+  .map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+  .join(' ')
+const tipoELoja = computed(() => {
+  const tipo = roleLabels[userData?.role] || capitalizar(userData?.role || '')
+  const loja = capitalizar(userData?.loja_nome || '')
+
+  return loja ? `${tipo}/${loja}` : tipo
+})
 const avatarImages = import.meta.glob('@/assets/images/avatars/avatar-*.png', { eager: true, import: 'default' })
 const avatars = Object.keys(avatarImages)
   .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
@@ -18,22 +28,6 @@ const userAvatar = computed(() => {
 
   return avatars[index % avatars.length]
 })
-const logout = () => {
-
-  // Remove "userData" from localStorage
-  localStorage.removeItem('userData')
-
-  // Remove "accessToken" from localStorage
-  localStorage.removeItem('accessToken')
-  router.push('/login').then(() => {
-
-    // Remove "userAbilities" from localStorage
-    localStorage.removeItem('userAbilities')
-
-    // Reset ability to initial ability
-    ability.update(initialAbility)
-  })
-}
 const avatarBadgeProps = {
   dot: true,
   location: 'bottom right',
@@ -89,8 +83,11 @@ const avatarBadgeProps = {
             <VListItemTitle class="font-weight-semibold">
               {{ userData?.fullName || userData?.username }}
             </VListItemTitle>
-            <VListItemSubtitle class="text-disabled">
-              {{ userData.role }}
+            <VListItemSubtitle
+              class="text-disabled text-wrap"
+              style="-webkit-line-clamp: unset;"
+            >
+              {{ tipoELoja }}
             </VListItemSubtitle>
           </VListItem>
 
@@ -113,7 +110,7 @@ const avatarBadgeProps = {
           <VDivider class="my-2" />
 
           <!-- 👉 Sair -->
-          <VListItem @click="logout">
+          <VListItem :to="{ path: '/logout' }">
             <template #prepend>
               <VIcon
                 class="me-2"

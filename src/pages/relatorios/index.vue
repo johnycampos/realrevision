@@ -747,7 +747,7 @@ onMounted(() => {
                   class="border rounded"
                 >
                   <thead>
-                    <tr class="bg-surface-variant">
+                    <tr>
                       <th class="font-weight-bold">
                         Loja
                       </th>
@@ -839,7 +839,7 @@ onMounted(() => {
                 class="border rounded"
               >
                 <thead>
-                  <tr class="bg-surface-variant">
+                  <tr>
                     <th class="font-weight-bold">
                       # ID
                     </th>
@@ -1033,7 +1033,7 @@ onMounted(() => {
                   class="border rounded"
                 >
                   <thead>
-                    <tr class="bg-surface-variant">
+                    <tr>
                       <th class="font-weight-bold">
                         Loja
                       </th>
@@ -1135,7 +1135,7 @@ onMounted(() => {
                 class="border rounded"
               >
                 <thead>
-                  <tr class="bg-surface-variant">
+                  <tr>
                     <th class="font-weight-bold">
                       Código
                     </th>
@@ -1317,7 +1317,7 @@ onMounted(() => {
               class="border rounded"
             >
               <thead>
-                <tr class="bg-surface-variant">
+                <tr>
                   <th class="font-weight-bold">
                     Código
                   </th>
@@ -1381,6 +1381,14 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.v-table :deep(.v-table__wrapper table thead tr th) {
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 .table-responsive {
   width: 100%;
   overflow-x: auto;

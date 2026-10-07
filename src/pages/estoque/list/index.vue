@@ -188,8 +188,10 @@ const formatarPreco = preco => {
 }
 
 // Função para formatar a quantidade
-const formatarQuantidade = (quantidade, unidade) => {
-  return `${quantidade} ${unidade}`
+const formatarQuantidade = val => {
+  if (val === null || val === undefined || val === '') return '-'
+
+  return Number(val).toLocaleString('pt-BR', { maximumFractionDigits: 2 })
 }
 
 // Computed para dados de paginação
@@ -393,7 +395,7 @@ watch(searchQuery, () => {
                       size="small"
                       class="text-capitalize"
                     >
-                      {{ item.quantidade_disponivel }}
+                      {{ formatarQuantidade(item.quantidade_disponivel) }}
                     </VChip>
                   </td>
 

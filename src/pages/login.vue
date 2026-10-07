@@ -171,17 +171,11 @@ const onSubmit = () => {
                     @click:append-inner="isPasswordVisible = !isPasswordVisible"
                   />
 
-                  <div class="d-flex align-center flex-wrap justify-space-between mt-1 mb-4">
+                  <div class="d-flex align-center mt-1 mb-4">
                     <VCheckbox
                       v-model="rememberMe"
                       label="Salvar login"
                     />
-                    <RouterLink
-                      class="text-primary ms-2 mb-1"
-                      :to="{ name: 'forgot-password' }"
-                    >
-                      Esqueci Senha?
-                    </RouterLink>
                   </div>
 
                   <VBtn

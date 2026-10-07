@@ -469,7 +469,7 @@
       <VCardText>
         <div class="d-flex align-center mb-4">
           <span class="text-subtitle-1 mr-4">Quantidade Atual:</span>
-          <span class="text-h6">{{ itemEditado.quantidade_disponivel }}</span>
+          <span class="text-h6">{{ formatarQuantidade(itemEditado.quantidade_disponivel) }}</span>
         </div>
         <VTextField
           v-model.number="quantidadeAjuste"
@@ -570,6 +570,12 @@ const props = defineProps({
 const emit = defineEmits(['update:item', 'close'])
 
 const temPermissao = computed(() => podeGerenciarEstoque())
+
+const formatarQuantidade = val => {
+  if (val === null || val === undefined || val === '') return '-'
+
+  return Number(val).toLocaleString('pt-BR', { maximumFractionDigits: 2 })
+}
 
 // Cria uma cópia editável do item
 const itemEditado = ref({ ...props.item })
