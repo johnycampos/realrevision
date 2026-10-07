@@ -48,6 +48,7 @@ const avatarBadgeProps = {
   <VBadge v-bind="avatarBadgeProps">
     <VAvatar
       class="cursor-pointer"
+      size="32"
       color="primary"
       variant="tonal"
     >
