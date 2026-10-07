@@ -4,9 +4,11 @@
 @use "misc";
 
 $header: ".layout-navbar";
+$opaque-header: ".layout-navbar:not(.navbar-blur)";
 
 @if variables.$layout-vertical-nav-navbar-is-contained {
   $header: ".layout-navbar .navbar-content-container";
+  $opaque-header: ".layout-navbar:not(.navbar-blur) .navbar-content-container";
 }
 
 .layout-wrapper.layout-nav-type-vertical {
@@ -24,6 +26,11 @@ $header: ".layout-navbar";
   }
 
   // Scrolled styles for sticky navbar
+  // Blurred headers keep the same background and spacing at every scroll position.
+  .navbar-blur#{$header} {
+    @extend %navbar-blurry-bg;
+  }
+
   @at-root {
     /* ℹ️ This html selector with not selector is required when:
         dialog is opened and window don't have any scroll. This removes window-scrolled class from layout and out style broke
@@ -31,12 +38,8 @@ $header: ".layout-navbar";
     html.v-overlay-scroll-blocked:not([style*="--v-body-scroll-y:0px;"]) .layout-navbar-sticky,
     &.window-scrolled.layout-navbar-sticky {
 
-      #{$header} {
+      #{$opaque-header} {
         @extend %default-layout-vertical-nav-scrolled-sticky-nav;
-      }
-
-      .navbar-blur#{$header} {
-        @extend %blurry-bg;
       }
     }
   }

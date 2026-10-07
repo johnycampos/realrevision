@@ -74,5 +74,5 @@
     "lint": "eslint src -c .eslintrc.js --fix --ext .ts,.js,.vue,.tsx,.jsx",
     "preview": "vite preview --port 5050"
   },
-  "version": "2.1.2"
+  "version": "2.1.3"
 }

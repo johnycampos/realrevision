@@ -69,19 +69,6 @@ injectSkinClasses()
           />
         </VBtn>
 
-        <VBtn
-          icon
-          variant="text"
-          color="default"
-          class="ms-lg-n3"
-          size="small"
-        >
-          <VIcon
-            icon="mdi-magnify"
-            size="24"
-          />
-        </VBtn>
-
         <VSpacer />
 
         <NavbarThemeSwitcher />

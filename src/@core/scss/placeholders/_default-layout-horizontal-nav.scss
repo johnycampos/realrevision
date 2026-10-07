@@ -10,7 +10,9 @@
   background-color: rgb(var(--v-theme-surface));
 
   &.header-blur {
-    @extend %blurry-bg;
+    @extend %navbar-blurry-bg;
+
+    box-shadow: none;
   }
 }
 
