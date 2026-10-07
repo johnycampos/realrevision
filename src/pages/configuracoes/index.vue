@@ -4,7 +4,7 @@ meta:
 </route>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import usuariosApi from '@/server/Usuarios'
 
 const currentUser = computed(() => {
@@ -94,10 +94,21 @@ const snackbar = ref({
   text: '',
   color: 'success'
 })
+let snackbarTimeout
 
 const mostrarAlerta = (text, color = 'success') => {
+  clearTimeout(snackbarTimeout)
   snackbar.value = { show: true, text, color }
+
+  // Vuetify pauses its own timer on hover; these alerts must always expire.
+  snackbarTimeout = setTimeout(() => {
+    snackbar.value.show = false
+  }, 3500)
 }
+
+onBeforeUnmount(() => {
+  clearTimeout(snackbarTimeout)
+})
 
 // Carregamento de dados
 const carregarDadosIniciais = async () => {
@@ -791,7 +802,7 @@ onMounted(() => {
     <VSnackbar
       v-model="snackbar.show"
       :color="snackbar.color"
-      timeout="3500"
+      :timeout="-1"
       location="top right"
     >
       {{ snackbar.text }}
